@@ -3,3 +3,6 @@
 *.bak
 Thumbs.db
 .DS_Store
+
+# Claude Code machine-specific configuration
+.claude/settings.local.json
