@@ -2,12 +2,12 @@
 document_id: STD-001
 title: Documentation Standards
 volume: Volume II – Standards
-version: 0.1.0
+version: 0.2.0
 status: Draft
 author: Denver Jacobs
 reviewers: TBD
 created: 2026-07-09
-last_updated: 2026-07-09
+last_updated: 2026-07-11
 classification: Public
 owner: SynapseOS Project
 approval_authority: Founder / Designated Architecture Authority
@@ -17,7 +17,7 @@ related_documents: GOV-001 through GOV-010
 # STD-001 – Documentation Standards
 
 **SynapseOS Engineering Manual — Volume II – Standards**
-**Version 0.1.0 (Draft)**
+**Version 0.2.0 (Draft)**
 **Controlled Engineering Standard**
 
 > This Markdown document is the canonical source-format conversion of `STD-001_Documentation_Standards_v0.1.docx`. The original Word document is retained as the source artifact pending a future controlled archival decision.
@@ -29,12 +29,12 @@ related_documents: GOV-001 through GOV-010
 | Document ID | STD-001 |
 | Title | Documentation Standards |
 | Volume | Volume II – Standards |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | Draft |
 | Author | Denver Jacobs |
 | Reviewers | TBD |
 | Created | 2026-07-09 |
-| Last Updated | 2026-07-09 |
+| Last Updated | 2026-07-11 |
 | Classification | Public |
 | Owner | SynapseOS Project |
 | Approval Authority | Founder / Designated Architecture Authority |
@@ -45,6 +45,7 @@ related_documents: GOV-001 through GOV-010
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1.0 | 2026-07-09 | Denver Jacobs | Initial controlled draft |
+| 0.2.0 | 2026-07-11 | Denver Jacobs | MINOR amendment (§13): registered Engineering Work Orders (EWO) and Engineering Reports (ER) as controlled document families, closing the governance gap identified during review of `ENGINEERING-PROGRAM.md`. Additive only — no existing obligation removed, weakened, or reinterpreted. See new §46, §47 and amended §5, §6, §7, §10, Appendix B. |
 
 ## Approval Status
 
@@ -53,6 +54,8 @@ related_documents: GOV-001 through GOV-010
 | Author | Denver Jacobs | Drafted | 2026-07-09 |
 | Technical Review | TBD | Pending | |
 | Approval Authority | TBD | Pending | |
+
+> **Note on version state:** A content-non-mutating approval evidence commit ("STD-001 Normal-Governance Approval Evidence Record") recorded Founder approval of this document at version 0.1.0, content fingerprint `47506d13de53d393f75a23a436f2cce08ab516633df46669957711b694d1c8c0` (blob `f370ef79218658367546bf0209d66bedd23df2f8`). Per §31.5, that evidence does not modify this artifact's tracked metadata, which is why the table above still reads as drafted/pending — that is expected and correct under this document's own convention. Version 0.2.0, introduced by the amendment described in the Revision History above, is a distinct, subsequent, **not yet approved** artifact identity. The 0.1.0 evidence record disposes of 0.1.0 only and must not be read as approving 0.2.0.
 
 ## 1. Purpose
 
@@ -98,14 +101,18 @@ The keywords MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, REC
 - RES – Research and investigation records.
 - OPS – Operational procedures and runbooks, when introduced.
 - TPL – Controlled templates, when a unique identifier is required.
+- EWO – Engineering Work Orders. Authorize specific, scoped engineering implementation tasks within governance, architecture and standards already in force. See §46.
+- ER – Engineering Reports. Record completed engineering work performed under an EWO. Informational only; creates no new requirement. See §47.
 
-Repository README files and local guides may remain unnumbered where they are navigational rather than authoritative.
+Repository README files and local guides may remain unnumbered where they are navigational rather than authoritative. `ENGINEERING-PROGRAM.md` is one such document: it introduces EWO and ER informally, but this section is what actually registers them as controlled document families.
 
 ## 6. Document Hierarchy and Precedence
 
 Where documents conflict, the issue must be resolved rather than ignored. As a default governance rule, approved governance constraints take precedence over subordinate standards; approved standards constrain architecture and implementation; architecture defines system intent; ADRs record specific decisions; RFCs define approved implementation contracts.
 
 A later approved document does not automatically override an earlier higher-authority document unless the change is explicit and traceable.
+
+An Engineering Work Order sits below Governance, Architecture and Standards in this precedence order: it is normative only for the specific engineering task it authorizes, and it may not redefine, override, or reinterpret any governance, architecture, or standards document. Where implementation performed under an EWO appears to contradict architecture, the EWO itself must require engineering to stop and escalate for architectural review rather than proceed on the EWO's authority alone. An Engineering Report carries no independent authority at all — it is a record of what happened, not a source of new obligation, and creates no requirement that did not already exist.
 
 ## 7. Identifier Standard
 
@@ -119,7 +126,11 @@ STD-001
 ARCH-000
 RFC-0001
 ADR-0001
+EWO-001
+ER-001
 ```
+
+EWO and ER use a three-digit zero-padded sequence number, consistent with GOV/STD/ARCH numbering, each family numbered independently starting at 001.
 
 Identifiers are permanent. A retired or superseded identifier must not be reassigned to a different document.
 
@@ -168,8 +179,10 @@ Controlled documentation should be stored by purpose:
 - `decisions/` – non-ADR decision registers where required
 - `assets/` – approved images and supporting assets
 - `scripts/` – documentation automation
+- `work-orders/` – EWO documents
+- `engineering-reports/` – ER documents
 
-The repository root `README.md` provides navigation and onboarding.
+The repository root `README.md` provides navigation and onboarding. This location guidance registers where EWO and ER documents belong once issued; it does not itself issue one, and the directories above are not created by this amendment.
 
 ## 11. Mandatory Metadata
 
@@ -532,6 +545,54 @@ Internal:
 
 External references will be added during formal review where adopted standards or authoritative guidance are relied upon.
 
+## 46. Engineering Work Orders (EWO)
+
+**Purpose.** An EWO authorizes a specific, scoped item of engineering work — implementation, reconciliation, migration, or another bounded engineering task — against governance, architecture and standards already in force.
+
+**Authority.** An EWO is normative, but only for the engineering task it authorizes. It has no authority beyond that task's stated scope.
+
+**Constraints.** An EWO:
+
+- MAY authorize implementation;
+- MAY define implementation scope;
+- MAY define validation requirements;
+- MAY define completion criteria.
+
+An EWO MUST NOT:
+
+- redefine Governance;
+- redefine Architecture;
+- redefine Standards;
+- approve constitutional changes (see ARCH-001 §10, Change Control);
+- approve Runtime architectural changes (see ARCH-002).
+
+If implementation performed under an EWO reveals an apparent architectural contradiction, the EWO MUST require engineering to stop and return the issue for architectural review rather than resolve it unilaterally. This mirrors the escalation rule already stated generally in §6.
+
+**Required metadata and structure.** An EWO SHALL identify at minimum the metadata required by §11, plus: objective, scope, constraints, definition of done, validation requirements, and reporting requirements. §15's Required Core Structure applies except where an EWO-specific template defines otherwise (§36).
+
+**Location and identifier.** `work-orders/EWO-NNN-Short-Descriptive-Title.md`, per §7 and §8.
+
+**Status lifecycle.** EWOs use the status values defined in §12 (typically Draft → Approved → Implemented). Approval evidence, where formally required, follows §31.
+
+## 47. Engineering Reports (ER)
+
+**Purpose.** An ER records engineering work completed under a specific EWO.
+
+**Authority.** An ER is informational only. It creates no new engineering requirement, and does not itself authorize, approve, or retroactively expand the scope of the EWO it reports against.
+
+**Required content.** An ER records, at minimum:
+
+- objective;
+- implementation summary;
+- validation performed;
+- deviations from the authorizing EWO, if any;
+- architectural conformance;
+- recommendations.
+
+**Location and identifier.** `engineering-reports/ER-NNN-Short-Descriptive-Title.md`, per §7 and §8. An ER SHOULD identify the EWO it reports against in its metadata (§11, Related Documents).
+
+**Relationship to architecture review.** Where an ER records an architectural conformance concern or a deviation reflecting a possible architectural contradiction, that finding is escalated for architectural review under §6 and does not resolve itself merely by being recorded.
+
 ## Appendix A – Controlled Document Header Template
 
 ```
@@ -561,6 +622,8 @@ Related ADRs:
 | ADR | Architecture Decision Record | Decision rationale and consequences | ADR-0001 |
 | ROAD | Roadmap | Milestones and future planning | ROAD-001 |
 | RES | Research | Investigation and evidence | RES-001 |
+| EWO | Engineering Work Order | Authorize scoped engineering work | EWO-NNN (none issued yet) |
+| ER | Engineering Report | Record completed engineering work | ER-NNN (none issued yet) |
 
 ## Appendix C – Pre-Approval Checklist
 
@@ -582,6 +645,7 @@ Related ADRs:
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1.0 | 2026-07-09 | Denver Jacobs | Initial comprehensive draft |
+| 0.2.0 | 2026-07-11 | Denver Jacobs | Registered Engineering Work Orders (EWO) and Engineering Reports (ER) as controlled document families. See §46, §47. |
 
 ## Approval
 
