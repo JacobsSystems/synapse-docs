@@ -198,7 +198,7 @@ Documents SHOULD additionally identify reviewers, approval authority, implementa
 - Archived – Retained for history and no longer maintained.
 - Rejected – Formally considered but not accepted, primarily for RFCs or proposals.
 
-Status transitions must be traceable.
+Status transitions must be traceable. See §31 (Approval Evidence Representation) for how an approval disposition is evidenced.
 
 ## 13. Versioning Standard
 
@@ -209,6 +209,8 @@ Controlled documents use MAJOR.MINOR.PATCH versioning.
 - MAJOR: material changes to obligations, architecture intent, governance meaning or compatibility.
 
 Draft documents may begin at 0.1.0. Initial formal approval normally establishes 1.0.0.
+
+Note: recording approval evidence under §31 does not itself require or imply a version change to the approved artifact; see §31.5.
 
 ## 14. Date Standard
 
@@ -231,7 +233,7 @@ Unless a document-family template defines otherwise, a controlled document SHOUL
 7. Open Questions where unresolved matters exist
 8. References
 9. Revision History
-10. Approval information where formal approval applies
+10. Approval information where formal approval applies (see §31, Approval Evidence Representation)
 
 Sections that do not apply may be omitted rather than filled with meaningless boilerplate.
 
@@ -355,11 +357,79 @@ Approval authority depends on document family and project maturity. Until delega
 
 An author may draft a document but SHOULD NOT represent an unreviewed draft as independently validated.
 
-## 31. Review Comments
+## 31. Approval Evidence Representation
+
+This section defines how a disposition already validly made under the applicable GOV-003 and GOV-010 authority is represented against an exact, immutable artifact identity. This section does not grant, define or constrain approval authority, approval classes, approval roles, review authority, decision authority, delegation, or conflict-of-interest policy. Those remain exclusively defined by GOV-003 and GOV-010.
+
+### 31.1 Exact Artifact Identity
+
+Approval evidence SHALL bind to the exact, immutable identity of the artifact it disposes of:
+
+- Document ID
+- Repository path
+- Version
+- Artifact revision identifier (a repository-native revision identifier that uniquely and immutably identifies the committed state acted upon, for example a Git commit ID)
+- Content fingerprint (a cryptographic hash computed from the exact committed bytes)
+- Git blob ID, where available
+
+Approval evidence MUST NOT rely on uncommitted content. The recorded content fingerprint MUST match the exact bytes committed at the recorded artifact revision and path.
+
+### 31.2 Disposition
+
+Approval evidence SHALL record:
+
+- Disposition (Approved, Rejected, Deferred, Returned for Revision, or another disposition the applicable GOV authority expressly permits)
+- Disposition type (explicitly labelled as the kind of act being represented, for example: approval, rejection, deferment)
+- Approver identity
+- Authority citation (the specific GOV-003 or GOV-010 provision under which the approver held authority to make this disposition)
+- Effective date, in the format required by §14 (Date Standard)
+
+This subsection requires that an authority citation be recorded. It does not itself grant, assign or interpret authority; the citation MUST reference a provision of GOV-003, GOV-010, or another duly effective controlling instrument.
+
+### 31.3 Supporting Evidence
+
+Approval evidence SHALL record:
+
+- Review evidence actually available, stated plainly where limited to disclosed self-review
+- Independent-review status, stated explicitly
+- Self-approval or conflict-of-interest disclosure, where required by the applicable GOV authority
+- Known limitations
+- Unresolved issues
+- Rationale
+
+Approval evidence MUST NOT represent disclosed self-review as independent review, and MUST NOT claim review evidence that does not exist.
+
+### 31.4 Representation Mechanism
+
+Approval evidence representation SHALL be:
+
+- immutable once recorded
+- content-non-mutating with respect to the approved artifact
+- cryptographically bound to the approved artifact's exact identity
+- independently auditable without reliance on external tooling
+- structured so that exact artifact identity is preserved and never silently superseded
+
+**Reference implementation for Git repositories:** the canonical implementation is a content-non-mutating commit — a commit whose tree is identical to its parent — containing the evidence described in §31.1-§31.3. This is the reference implementation of the abstract requirements above, not a separate or additional requirement.
+
+### 31.5 Static Lifecycle Metadata
+
+Approval evidence SHALL NOT be interpreted as modifying the lifecycle metadata contained within the approved artifact. Recording approval evidence does not require, and MUST NOT be used to justify, rewriting the approved artifact's tracked `status`, `version`, or other metadata fields. Reconciliation of tracked metadata to reflect operative approval, if performed at all, is a separate, later, distinct action, not a precondition or consequence of valid approval evidence.
+
+### 31.6 Exclusions
+
+This section generalises the reusable evidence-identity model already established by ADR-0011 §14. It does not restate, replace or narrow:
+
+- Act 1-specific provisions
+- Act 2-specific provisions, including ADR-0012's Act 2 evidence schema
+- Bootstrap Authority State-specific provisions
+
+Where a disposition is made under Act 1, Act 2, or otherwise concerns Bootstrap Authority State, the applicable ADR-0011 or ADR-0012 provision governs instead of this section.
+
+## 32. Review Comments
 
 Review comments should identify the issue, rationale and requested disposition. Authors should resolve comments as accepted, modified, rejected with rationale, or deferred with an owner and target.
 
-## 32. AI-Assisted Documentation
+## 33. AI-Assisted Documentation
 
 AI tools MAY draft, transform, review, compare and maintain documentation. The following controls apply:
 
@@ -371,23 +441,23 @@ AI tools MAY draft, transform, review, compare and maintain documentation. The f
 - High-impact normative changes require human review.
 - Prompts and outputs may be retained when they materially explain provenance or decisions.
 
-## 33. Documentation Drift
+## 34. Documentation Drift
 
 Documentation drift occurs when implementation and controlled documentation diverge. Drift must be treated as engineering debt.
 
 Changes that alter public interfaces, security behaviour, architecture boundaries or operational procedures SHOULD include documentation updates in the same change set where practical.
 
-## 34. Documentation Debt
+## 35. Documentation Debt
 
 Known missing, obsolete or ambiguous documentation SHOULD be recorded and prioritised according to impact. Documentation debt that creates security, operational or implementation risk may block release.
 
-## 35. Templates
+## 36. Templates
 
 Each major controlled family SHOULD have a maintained template. Templates define required metadata and family-specific sections but must not force irrelevant boilerplate.
 
 Template changes are versioned and do not automatically rewrite historical documents.
 
-## 36. Classification
+## 37. Classification
 
 Initial classifications may include:
 
@@ -398,19 +468,19 @@ Initial classifications may include:
 
 Secrets must not be stored in ordinary documentation regardless of classification.
 
-## 37. Accessibility and Readability
+## 38. Accessibility and Readability
 
 Documentation SHOULD use meaningful headings, descriptive link text, sufficient contrast in exported artifacts, alt text for informative images and tables that remain understandable when printed.
 
 Do not use colour as the only carrier of meaning.
 
-## 38. Archiving and Supersession
+## 39. Archiving and Supersession
 
 Superseded documents remain available for historical traceability. The old document must identify its replacement, and the replacement should identify what it supersedes where relevant.
 
 Do not delete historical decisions merely because the project changed direction.
 
-## 39. Documentation Quality Gates
+## 40. Documentation Quality Gates
 
 Before approval, confirm:
 
@@ -427,21 +497,21 @@ Before approval, confirm:
 - [ ] Required reviewers have completed review.
 - [ ] The document is understandable without conversation history.
 
-## 40. Exceptions
+## 41. Exceptions
 
 A deviation from this standard may be approved when compliance would create disproportionate cost or reduce clarity. The exception should record scope, rationale, owner, duration and any compensating controls.
 
 Repeated exceptions should trigger review of the standard itself.
 
-## 41. Compliance
+## 42. Compliance
 
 New controlled documents created after approval of STD-001 SHALL comply with this standard. Existing documents SHOULD be migrated incrementally, prioritising active and high-impact material.
 
-## 42. Success Criteria
+## 43. Success Criteria
 
 This standard succeeds when SynapseOS documentation is consistent, searchable, traceable, reviewable, maintainable by humans and AI tools, and lightweight enough not to prevent iterative delivery.
 
-## 43. Open Questions
+## 44. Open Questions
 
 - When will Markdown formally become the sole canonical source of truth?
 - Which document families require signed approval artifacts?
@@ -449,7 +519,7 @@ This standard succeeds when SynapseOS documentation is consistent, searchable, t
 - Which documentation checks should be mandatory in CI/CD?
 - What retention period should apply to internal review records?
 
-## 44. References
+## 45. References
 
 Internal:
 
