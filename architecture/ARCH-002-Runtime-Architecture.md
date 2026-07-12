@@ -68,6 +68,8 @@ This document does not govern: ARCH-001's constitutional concepts, which it inhe
 
 **What it must never become:** an application framework; an AI agent; a provider-specific orchestration layer; a global policy engine; a collection of unrelated services; a replacement for the host operating system.
 
+**Interaction accountability (ADR-0016):** the Runtime is the sole architectural entity accountable for establishing and coordinating interaction among the Trusted Core components named in §6 — a direct statement of what "realize... as running behavior" above already requires, since no individual component's own responsibility includes connecting to another. This assigns interaction accountability only; it does not alter, absorb, or duplicate any Trusted Core component's own behavioural responsibility, and it prescribes no implementation mechanism by which the Runtime's accountability is realized.
+
 ## 4. Runtime Boundary
 
 Extending ARCH-001 §7–§8 with Runtime-internal granularity:
@@ -133,6 +135,8 @@ Merging overlapping candidates and rejecting unnecessary decomposition, per the 
 
 Audit Emitter is deliberately not folded into any single other trusted component: every other trusted component calls into it, making it a genuine cross-cutting utility rather than an artificially separated concern.
 
+**Interaction rule (ADR-0016):** no Trusted Core component listed above interacts directly with another. This follows from §3's interaction-accountability rule being exclusive to the Runtime: a component independently establishing or owning a direct peer interaction path would itself be exercising the accountability §3 assigns solely to the Runtime. Each component's responsibility and prohibitions, as stated in the table above, are otherwise unchanged — this rule governs how components connect, not what any of them individually does.
+
 ## 7. Actor Runtime Representation
 
 An actor has a **logical identity**, assigned once at definition, stable across suspension, resumption, and restart. A restarted actor (a new instance under supervision) receives a new **instance identity**, distinct from its unchanging logical identity; capabilities generally bind to logical identity, with instance-level scoping used for isolation and execution-ownership bookkeeping. Actor state is private, held per-instance, enforced by Actor Host. The message-handling contract is actor-defined and Runtime-agnostic — ARCH-002 requires that one exists and is triggered per Execution Semantics, not how it is written. Each actor instance has exactly one mailbox (§11). Capability bindings are held by Capability Authority, associated with logical identity. Local versus remote representation is a location concern, not an identity concern: logical identity is location-transparent by contract; the concrete distributed-routing mechanism is deferred (§21).
@@ -183,6 +187,8 @@ Execution Context MUST NOT become an authority source (it composes references, i
 | 18 | Execution completion | Execution Coordinator | Trusted | Exactly one completion per execution | N/A — success path |
 | 19 | Actor → idle/suspended/failed/terminated | Lifecycle Guardian | Trusted | Only legal transitions accepted | Illegal transition → forced safe failure state |
 | 20 | Runtime shutdown | Host Adapter, trusted components | Trusted | No silent loss of admitted/committed work | Forced shutdown → best-effort suspension, audited |
+
+Step 17's "Consumer failure MUST NOT block execution" governs only downstream Audit Pipeline (consumer) failure, per §6's Audit Pipeline entry. It does not extend to Audit Emitter's own emission failing: per ADR-0015, where a step above requires mandatory audit emission, failure of that emission causes the step's own operation to fail before it may be reported successful. This does not cause Runtime-level failure and does not alter any other step's stated failure behavior.
 
 ## 12. Concurrency Model
 
@@ -279,7 +285,7 @@ Explicitly deferred, with no contradiction to the core architecture: distributed
 
 ## 22. Conformance Requirements
 
-**Mandatory:** the four trusted-core guarantees (§5) hold at all times; single-message processing per actor instance (§12); bounded mailboxes (§13); immutable messages and capabilities; singular execution ownership; authority only through presented capability, never ambient; audit emission for every security-relevant event.
+**Mandatory:** the four trusted-core guarantees (§5) hold at all times; single-message processing per actor instance (§12); bounded mailboxes (§13); immutable messages and capabilities; singular execution ownership; authority only through presented capability, never ambient; audit emission for every security-relevant event — an operation with a mandatory audit obligation is not reported successful unless that emission succeeded (ADR-0015; §11 step 17).
 
 **Permitted variation:** implementation language; transport technology; persistence technology; scheduling algorithm, provided it satisfies the no-starvation contract; isolation mechanism (process-level, language-level, or hybrid).
 
