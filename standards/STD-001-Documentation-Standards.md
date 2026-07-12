@@ -2,12 +2,12 @@
 document_id: STD-001
 title: Documentation Standards
 volume: Volume II – Standards
-version: 0.2.0
+version: 0.3.1
 status: Draft
 author: Denver Jacobs
 reviewers: TBD
 created: 2026-07-09
-last_updated: 2026-07-11
+last_updated: 2026-07-12
 classification: Public
 owner: SynapseOS Project
 approval_authority: Founder / Designated Architecture Authority
@@ -17,7 +17,7 @@ related_documents: GOV-001 through GOV-010
 # STD-001 – Documentation Standards
 
 **SynapseOS Engineering Manual — Volume II – Standards**
-**Version 0.2.0 (Draft)**
+**Version 0.3.1 (Draft)**
 **Controlled Engineering Standard**
 
 > This Markdown document is the canonical source-format conversion of `STD-001_Documentation_Standards_v0.1.docx`. The original Word document is retained as the source artifact pending a future controlled archival decision.
@@ -29,12 +29,12 @@ related_documents: GOV-001 through GOV-010
 | Document ID | STD-001 |
 | Title | Documentation Standards |
 | Volume | Volume II – Standards |
-| Version | 0.2.0 |
+| Version | 0.3.1 |
 | Status | Draft |
 | Author | Denver Jacobs |
 | Reviewers | TBD |
 | Created | 2026-07-09 |
-| Last Updated | 2026-07-11 |
+| Last Updated | 2026-07-12 |
 | Classification | Public |
 | Owner | SynapseOS Project |
 | Approval Authority | Founder / Designated Architecture Authority |
@@ -46,6 +46,8 @@ related_documents: GOV-001 through GOV-010
 |---|---|---|---|
 | 0.1.0 | 2026-07-09 | Denver Jacobs | Initial controlled draft |
 | 0.2.0 | 2026-07-11 | Denver Jacobs | MINOR amendment (§13): registered Engineering Work Orders (EWO) and Engineering Reports (ER) as controlled document families, closing the governance gap identified during review of `ENGINEERING-PROGRAM.md`. Additive only — no existing obligation removed, weakened, or reinterpreted. See new §46, §47 and amended §5, §6, §7, §10, Appendix B. |
+| 0.3.0 | 2026-07-12 | Denver Jacobs | MINOR amendment: registered Engineering Maintenance Orders (EMO) and Engineering Maintenance Reports (EMR) as controlled document families, closing the governance gap identified when a post-completion implementation conformance defect was discovered in a milestone already delivered under an EWO/ER, with no existing mechanism to correct it without rewriting completed engineering history. Additive only — no existing obligation removed, weakened, or reinterpreted; EWO and ER are unchanged and EMO/EMR supplement rather than replace them. See new §48, §49 and amended §5, §6, §7, §10, Appendix B. |
+| 0.3.1 | 2026-07-12 | Denver Jacobs | Final governance review refinement of the 0.3.0 EMO/EMR amendment, still Draft/unapproved. Tightened §6 and §48 to state explicitly that an EMO creates no independent engineering authorization path and derives its authority only from already-approved architecture/standards and the specific EWO it maintains, authorizing nothing outside that EWO's scope. Added explicit "Mandatory traceability" MUST-lists to §48 and §49 (EMO: EWO maintained, ER related to; EMR: EMO implemented, EWO maintained, ER supplemented), replacing §49's prior SHOULD-level phrasing. Tightened §48's MUST-NOT list to use the exact prohibited-action phrasing reviewed (authorize new engineering work; bypass or replace the ADR process) and added a summary sentence stating an EMO exists solely to maintain conformance of an already-completed deliverable. Added an explicit "EMO/EMR supplement history; they never replace it" statement to §48 and §49. Clarified in §7 that EMO/EMR numbering is independent not only of EWO/ER numbering but of any informal milestone label (e.g. "SRP-NNN"), which is not itself a controlled identifier family, and that an EMO/EMR number MUST NOT be chosen to numerically match the artifact it relates to. No new section, no new document family, no change to EWO/ER's own text, no change outside the 0.3.0 amendment's own scope. |
 
 ## Approval Status
 
@@ -103,6 +105,8 @@ The keywords MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, REC
 - TPL – Controlled templates, when a unique identifier is required.
 - EWO – Engineering Work Orders. Authorize specific, scoped engineering implementation tasks within governance, architecture and standards already in force. See §46.
 - ER – Engineering Reports. Record completed engineering work performed under an EWO. Informational only; creates no new requirement. See §47.
+- EMO – Engineering Maintenance Orders. Authorize narrowly scoped maintenance work on a completed engineering milestone, without rewriting its original EWO or ER. See §48.
+- EMR – Engineering Maintenance Reports. Record completed maintenance work performed under an EMO. Informational only; creates no new requirement. See §49.
 
 Repository README files and local guides may remain unnumbered where they are navigational rather than authoritative. `ENGINEERING-PROGRAM.md` is one such document: it introduces EWO and ER informally, but this section is what actually registers them as controlled document families.
 
@@ -113,6 +117,8 @@ Where documents conflict, the issue must be resolved rather than ignored. As a d
 A later approved document does not automatically override an earlier higher-authority document unless the change is explicit and traceable.
 
 An Engineering Work Order sits below Governance, Architecture and Standards in this precedence order: it is normative only for the specific engineering task it authorizes, and it may not redefine, override, or reinterpret any governance, architecture, or standards document. Where implementation performed under an EWO appears to contradict architecture, the EWO itself must require engineering to stop and escalate for architectural review rather than proceed on the EWO's authority alone. An Engineering Report carries no independent authority at all — it is a record of what happened, not a source of new obligation, and creates no requirement that did not already exist.
+
+An Engineering Maintenance Order creates no independent engineering authorization path and carries the same authority as, and no more than, an Engineering Work Order: normative only for the narrow maintenance task it authorizes, and subject to the same prohibition on redefining, overriding, or reinterpreting governance, architecture, or standards. Its authority is derived exclusively from the already-approved architecture and standards it restores conformance to, and from the specific, completed EWO it maintains — it authorizes nothing outside that EWO's own scope, and grants engineering no authorization that does not already trace back to one of those two sources. An EMO exists only to restore implementation conformance to architecture or standards that already govern it; it is never a vehicle for a new architectural decision. Where maintenance work performed under an EMO exposes an apparent architectural deficiency, the EMO itself must require engineering to stop and route the issue through the existing ADR process rather than resolve it unilaterally — the same escalation rule §46 already states for an EWO. An Engineering Maintenance Report carries no independent authority, on the same basis as an Engineering Report.
 
 ## 7. Identifier Standard
 
@@ -128,9 +134,11 @@ RFC-0001
 ADR-0001
 EWO-001
 ER-001
+EMO-001
+EMR-001
 ```
 
-EWO and ER use a three-digit zero-padded sequence number, consistent with GOV/STD/ARCH numbering, each family numbered independently starting at 001.
+EWO, ER, EMO, and EMR use a three-digit zero-padded sequence number, consistent with GOV/STD/ARCH numbering, each family numbered independently starting at 001. EMO and EMR are numbered independently of the EWO/ER they relate to — an EMO's own sequence number does not encode which EWO it maintains; that relationship is carried in metadata (§48, §49), since one completed milestone may require more than one later maintenance action, and maintenance is issued in the order it arises, not in the order of the milestones it concerns. EMO and EMR numbering is likewise independent of any informal milestone label used in engineering discussion (for example, an "SRP-NNN" designation) — such labels are not a controlled identifier family under this section, and an EMO/EMR number MUST NOT be chosen to numerically match an EWO, ER, or milestone label it relates to.
 
 Identifiers are permanent. A retired or superseded identifier must not be reassigned to a different document.
 
@@ -181,8 +189,9 @@ Controlled documentation should be stored by purpose:
 - `scripts/` – documentation automation
 - `work-orders/` – EWO documents
 - `engineering-reports/` – ER documents
+- `maintenance/` – EMO and EMR documents
 
-The repository root `README.md` provides navigation and onboarding. This location guidance registers where EWO and ER documents belong once issued; it does not itself issue one, and the directories above are not created by this amendment.
+The repository root `README.md` provides navigation and onboarding. This location guidance registers where EWO, ER, EMO, and EMR documents belong once issued; it does not itself issue one, and the directories above are not created by this amendment.
 
 ## 11. Mandatory Metadata
 
@@ -593,6 +602,77 @@ If implementation performed under an EWO reveals an apparent architectural contr
 
 **Relationship to architecture review.** Where an ER records an architectural conformance concern or a deviation reflecting a possible architectural contradiction, that finding is escalated for architectural review under §6 and does not resolve itself merely by being recorded.
 
+## 48. Engineering Maintenance Orders (EMO)
+
+**Purpose.** An EMO authorizes narrowly scoped maintenance work on a completed engineering milestone, where architecture and standards already in force determine the correct behaviour and the milestone's original EWO and ER are not to be rewritten. Maintenance includes: implementation conformance fixes; implementation defects; standards conformance updates; implementation-level refinements; and other narrowly scoped engineering maintenance of already-completed work.
+
+**Authority.** An EMO creates no independent engineering authorization path. Its authority is entirely derived, not original: from the already-approved architecture and standards the maintenance restores conformance to, and from the specific, completed EWO it maintains. An EMO is normative only for the maintenance task it authorizes, has no authority beyond that task's stated scope, no greater authority than an EWO (§46), and MUST NOT authorize any work outside the scope of the specific EWO it maintains.
+
+**Constraints.** An EMO:
+
+- MAY authorize a conformance fix to a completed milestone's implementation;
+- MAY define the corrective scope and validation requirements;
+- MAY define completion criteria.
+
+An EMO MUST NOT:
+
+- authorize new engineering work;
+- broaden the original milestone's scope;
+- introduce future-milestone work;
+- reinterpret architecture;
+- introduce new architecture;
+- bypass the ADR process, or replace it;
+- authorize unrelated engineering;
+- redefine Governance;
+- redefine Architecture;
+- redefine Standards;
+- approve constitutional changes (see ARCH-001 §10, Change Control);
+- approve Runtime architectural changes (see ARCH-002).
+
+An EMO exists solely to maintain conformance of an already-completed engineering deliverable to architecture or standards that already govern it — never to make a new architectural decision, and never to authorize engineering work beyond that narrow purpose.
+
+If maintenance work exposes an apparent architectural deficiency — a gap, contradiction, or genuinely undetermined question architecture does not already resolve — the EMO MUST require engineering to stop and route the issue through the existing ADR process (ADR family, §5; §6) rather than resolve it unilaterally. This mirrors the escalation rule §46 already states for an EWO, and an EMO MUST NOT resolve such an issue itself.
+
+**Mandatory traceability.** Every EMO MUST identify, in its metadata (§11, Related Documents):
+
+- the EWO it maintains;
+- the ER it relates to, if one exists.
+
+An EMO SHALL identify at minimum the metadata required by §11, plus the two items above, and: the identifier of any earlier EMO or EMR it supersedes, where applicable; objective; corrective scope; constraints; definition of done; validation requirements; and reporting requirements. §15's Required Core Structure applies except where an EMO-specific template defines otherwise (§36).
+
+**Location and identifier.** `maintenance/EMO-NNN-Short-Descriptive-Title.md`, per §7 and §8.
+
+**Status lifecycle.** EMOs use the status values defined in §12 (typically Draft → Approved → Implemented). Approval evidence, where formally required, follows §31. Review depth follows §29; a normative maintenance change follows the "Normative standard change" review tier at minimum, since it changes what a completed milestone's implementation is required to do.
+
+**Historical integrity.** Issuing an EMO never modifies the EWO or ER it maintains. Completed EWOs and ERs remain immutable; engineering history is preserved. An EMO supplements the historical record; it never replaces it, and maintenance is always recorded through new documents, never by rewriting completed engineering records (§4, §28).
+
+## 49. Engineering Maintenance Reports (EMR)
+
+**Purpose.** An EMR records the implementation and verification of maintenance authorized by a specific EMO.
+
+**Authority.** An EMR is informational only, on the same basis as an ER (§47). It creates no new engineering requirement, and does not itself authorize, approve, or retroactively expand the scope of the EMO it reports against, or of the original EWO.
+
+**Mandatory traceability.** Every EMR MUST identify, in its metadata (§11, Related Documents):
+
+- the EMO it implements;
+- the EWO maintained;
+- the ER whose historical record it supplements, if one exists.
+
+**Required content.** An EMR records, at minimum:
+
+- scope completed;
+- files changed;
+- testing performed;
+- deviations from the authorizing EMO, if any;
+- engineering assessment;
+- relationship to the original EWO and ER, including which of their statements, if any, the recorded maintenance work supersedes as a matter of historical record — without editing the original documents' own text.
+
+**Location and identifier.** `maintenance/EMR-NNN-Short-Descriptive-Title.md`, per §7 and §8.
+
+**Relationship to architecture review.** Where an EMR records an architectural conformance concern or a deviation reflecting a possible architectural contradiction, that finding is escalated for architectural review under §6 and does not resolve itself merely by being recorded — on the same basis as an ER (§47).
+
+**Historical integrity.** The original EWO and ER remain unchanged by an EMR. An EMR supplements the historical record; it never replaces it, and does not retroactively alter what the original EWO authorized or what the original ER recorded — it documents subsequent maintenance as a distinct, separate, cross-referenced record.
+
 ## Appendix A – Controlled Document Header Template
 
 ```
@@ -624,6 +704,8 @@ Related ADRs:
 | RES | Research | Investigation and evidence | RES-001 |
 | EWO | Engineering Work Order | Authorize scoped engineering work | EWO-NNN (none issued yet) |
 | ER | Engineering Report | Record completed engineering work | ER-NNN (none issued yet) |
+| EMO | Engineering Maintenance Order | Authorize scoped maintenance on a completed milestone, without rewriting its EWO/ER | EMO-NNN (none issued yet) |
+| EMR | Engineering Maintenance Report | Record completed maintenance work | EMR-NNN (none issued yet) |
 
 ## Appendix C – Pre-Approval Checklist
 
@@ -646,6 +728,8 @@ Related ADRs:
 |---|---|---|---|
 | 0.1.0 | 2026-07-09 | Denver Jacobs | Initial comprehensive draft |
 | 0.2.0 | 2026-07-11 | Denver Jacobs | Registered Engineering Work Orders (EWO) and Engineering Reports (ER) as controlled document families. See §46, §47. |
+| 0.3.0 | 2026-07-12 | Denver Jacobs | Registered Engineering Maintenance Orders (EMO) and Engineering Maintenance Reports (EMR) as controlled document families, supplementing EWO/ER to allow narrowly scoped post-completion conformance maintenance without rewriting completed engineering history. See §48, §49. |
+| 0.3.1 | 2026-07-12 | Denver Jacobs | Final governance review refinement of the 0.3.0 EMO/EMR amendment: explicit authority-inheritance statement, mandatory (MUST-level) traceability lists for both EMO and EMR, tightened scope-restriction wording, explicit supplement-not-replace historical-integrity statements, and explicit independence of EMO/EMR numbering from EWO/ER numbers and informal milestone labels. See §6, §7, §48, §49. |
 
 ## Approval
 
