@@ -3,7 +3,7 @@ document_id: ARCH-001
 title: Constitutional Architecture
 project: SynapseOS
 specification: SynapseOS — constitutional architecture governing all future ARCH documents
-version: 0.1.0
+version: 0.2.0
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -11,7 +11,7 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-11
-last_updated: 2026-07-11
+last_updated: 2026-07-12
 classification: Public
 related_documents:
   governance:
@@ -26,6 +26,7 @@ related_documents:
     - ADR-0011 (Draft, Act 1 effective)
     - ADR-0012 (Approved)
     - ADR-0013 (Draft — architectural evolution basis for this document)
+    - ADR-0017 (Draft — bootstrap capability trust root clarification, §5.2 and §6)
   roadmap: None
   research: None
   operational: None
@@ -85,6 +86,8 @@ Four concepts are constitutional. Each owns exactly one responsibility, is defin
 
 **What it must never become:** a role, a permission string, an access-control-list entry, an API key, a bearer token conveying unscoped authority, a bare actor address, a service identifier, a policy decision, or an identity claim. Authority exists only through explicit capability derivation, traceable through an unbroken, non-widening chain to a single bootstrap root.
 
+**Bootstrap trust root (ADR-0017):** the single bootstrap root capability derivation traces to is created exactly once, as part of the Runtime's own one-time bootstrap act (ARCH-002 §11, step 1) — never through ordinary capability issuance or attenuation, and never exposed through any public Runtime interface. It is the sole capability with no issuer to validate, and the sole root every other capability's provenance ultimately traces to. Ordinary issuance requires an already-validated issuer; attenuation requires an already-validated source. Because validity is required transitively — a capability can supply authority to a derivation only once it has itself been validated, which in turn required its own issuer or source to already be valid — capability provenance is a rooted, acyclic structure by construction: never more than one root, never a cycle.
+
 ### 5.3 Message
 
 **What it is:** the unit of interaction — an immutable, uniquely identified, strongly typed request for work, addressed to an actor, optionally carrying a capability reference for delegation.
@@ -114,6 +117,7 @@ Four concepts are constitutional. Each owns exactly one responsibility, is defin
 - Messages are immutable once created and carry a unique, immutable identity.
 - The Runtime realizes the constitutional architecture; it does not redefine it.
 - A fixed, named set of foundational Runtime mechanisms — capability enforcement, audit emission, scheduling, time observation, transport, and bootstrap — are necessarily outside the Actor model, because each is either structurally prior to actor execution or required to remain unbypassable by it. Runtime services that are not Actors must never perform application execution.
+- The single bootstrap root required by capability derivation (§5.2) is created exactly once, as part of Runtime's own one-time bootstrap act; it is never created through ordinary capability issuance or attenuation, and never exposed through any public Runtime interface (ADR-0017).
 
 ## 7. Architectural Layering
 
@@ -146,3 +150,10 @@ No future ARCH document may redefine a constitutional concept or law. A future A
 ## 11. Relationship to Future ARCH Documents
 
 ARCH-002 (Runtime Architecture) and all subsequent ARCH documents inherit this constitutional architecture without exception. They refine Runtime-layer and Infrastructure-layer design — the mechanics of scheduling, isolation, persistence, transport, and subsystem behavior. They do not redefine Actor, Capability, Message, or Execution Semantics, and they do not restate the constitutional laws in §6; they cite this document instead.
+
+## Revision History
+
+| Version | Date | Author | Description |
+|---|---|---|---|
+| 0.1.0 | 2026-07-11 | Denver Jacobs | Initial Draft. |
+| 0.2.0 | 2026-07-12 | Denver Jacobs | Clarifying amendment per ADR-0017 (Bootstrap Capability Trust Root), resolving the ambiguity discovered during SRP-004 (Capability Authority) independent engineering review: how the single bootstrap root required by §5.2/§6 comes to exist, and how it is distinguished from ordinary capability issuance. Added a "Bootstrap trust root (ADR-0017)" paragraph to §5.2 stating that the root is created exactly once, during Runtime's own one-time bootstrap act, never through ordinary issuance or attenuation, never exposed through any public interface, and that ordinary issuance/attenuation require an already-validated issuer/source — from which capability provenance forming a rooted, acyclic structure follows by construction. Added one corresponding bullet to §6 (Constitutional Laws). No constitutional concept or existing law was redefined; §5.2's and §6's pre-existing text is unchanged except for these additions. No amendment to ARCH-002 was required — see ADR-0017 §9 for why. |
