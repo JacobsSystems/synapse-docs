@@ -3,7 +3,7 @@ document_id: ARCH-003
 title: Runtime Integration Architecture
 project: SynapseOS
 specification: SynapseOS — how the published Trusted Core components integrate into one coherent runtime, realizing ARCH-002
-version: 0.1.0
+version: 0.2.0
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -33,7 +33,7 @@ related_documents:
   research: None
   operational: None
   source_artifacts:
-    - synapse-runtime @ ee0b691383c11009538809542e4f1cd185020dc9 (SRP-001 through SRP-007)
+    - synapse-runtime @ 01047157b6783d816fed80361b40206a98ba6f2f (SRP-001 through SRP-007; EWO-004 Runtime Integration Bootstrap — Host Execution Handle Binding)
 supersedes: None
 superseded_by: None
 ai_assistance: Drafting
@@ -53,7 +53,7 @@ ai_assistance: Drafting
 |---|---|
 | Document ID | ARCH-003 |
 | Title | Runtime Integration Architecture |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | **Draft** |
 | Author | Denver Jacobs |
 | Approval authority | Chief Architect (Class B, per GOV-010 §5), vacant; Founder (interim) |
@@ -81,17 +81,17 @@ ARCH-003 defines how the seven Trusted Core components ARCH-002 §6 already spec
 - **ADR-0015** (Audit Emitter Failure Semantics) governs every audit-emission failure behavior described in §14–§15 below: where an operation carries a mandatory audit obligation, failure of that emission fails the operation's own report to its caller, with no rollback of already-committed component-level state.
 - **ADR-0017** (Bootstrap Capability Trust Root) governs the capability-issuance boundary referenced in §13.
 - **Governance (GOV-003, GOV-010)** and **STD-001** govern this document's own review, approval, and evidentiary process; they are not architectural inputs to its content.
-- **Existing implementation** (`synapse-runtime` @ `ee0b691383c11009538809542e4f1cd185020dc9`) is treated as evidence, not as authority: where implementation and ARCH-002 appear to diverge, ARCH-002 governs, and the divergence is recorded as a defect or as deferred work, never silently reconciled by describing the implementation as if it were the architecture.
+- **Existing implementation** (`synapse-runtime` @ `01047157b6783d816fed80361b40206a98ba6f2f`) is treated as evidence, not as authority: where implementation and ARCH-002 appear to diverge, ARCH-002 governs, and the divergence is recorded as a defect or as deferred work, never silently reconciled by describing the implementation as if it were the architecture.
 
 Component responsibilities, ownership, and prohibitions remain exactly as ARCH-002 §6 states them. ARCH-003 adds no new responsibility to any component and removes none.
 
 ## 5. Current Implementation Baseline
 
-Verified directly against `synapse-runtime` @ `ee0b691383c11009538809542e4f1cd185020dc9` (`runtime/src/lib.rs` and each Trusted Core crate's `src/internal.rs`), not assumed:
+Verified directly against `synapse-runtime` @ `01047157b6783d816fed80361b40206a98ba6f2f` (`runtime/src/lib.rs` and each Trusted Core crate's `src/internal.rs`), not assumed:
 
 - All seven Trusted Core components are implemented and published: Runtime Bootstrap (SRP-001), Actor Host (SRP-002), Message Gateway (SRP-003), Capability Authority (SRP-004), Execution Coordinator (SRP-005), Lifecycle Guardian (SRP-006), Host Adapter (SRP-007).
+- **Execution Coordinator ↔ Host Adapter integration is implemented (EWO-004; ER-004).** `Runtime::execute_message` obtains a Host Execution Handle from Host Adapter's `allocate_execution_handle` before Execution Coordinator constructs the Execution Context for that execution, supplies the handle so the returned context genuinely carries it, and releases the same handle back to Host Adapter's `release_execution_handle` after the execution concludes, on every path — successful completion, or rejection during construction, dispatch, or completion. Execution Coordinator still never calls Host Adapter directly, and Host Adapter still never calls Execution Coordinator directly — Runtime alone connects them (ADR-0016), exactly as this document's own Integration Invariants (§17, invariants 6–7) already required of any such connection.
 - Several cross-component runtime flows remain incomplete. Specifically:
-  - **Host Adapter is not connected to anything.** `TrustedCore` constructs a `HostAdapterHandle` and holds it; no method on `Runtime` ever calls into it. Execution Coordinator's `construct_context` does not call Host Adapter, does not accept a `HostExecutionHandle` parameter, and does not obtain a handle from Host Adapter — it populates `ExecutionContext.host_execution_handle` with the bare `HostExecutionHandle` marker value directly (§11).
   - **Lifecycle Guardian and Execution Coordinator are not integrated with each other.** Execution Coordinator tracks per-instance dispatch progress (`Constructed`/`Dispatched`) entirely in its own private state; this state is never communicated to Lifecycle Guardian, which tracks its own, separate per-instance `ActorState` and has no path to Execution Coordinator's state (ADR-0016 forbids either from reaching the other directly).
   - **Successful suspend and restore paths are currently unreachable through the Runtime's own public API.** Lifecycle Guardian's `suspend` is legal only from `Executing` (ARCH-002 §15's only edge into `Suspended`). Nothing in the currently wired system ever marks an instance `Executing` in Lifecycle Guardian's own tracked state — that would require Execution Coordinator to report dispatch start to Lifecycle Guardian, which does not happen. Consequently `Runtime::suspend_actor_instance` observes `IllegalTransition` for any genuinely live instance reached through the rest of the Runtime's own public API, and `Runtime::restore_actor_instance` (legal only from `Suspended`) is transitively unreachable for the same reason. Both methods are correctly implemented and independently exercisable (each crate's own tests, using a test-only state seam scoped to that crate, prove the success path exists), but neither succeeds via any sequence the Runtime's committed, integrated API actually offers today.
   - **End-to-end actor execution is not demonstrated.** No actor-defined message-handling logic exists anywhere in the workspace (ARCH-002 §7 requires the contract exist and be triggered; it does not require it be written by this milestone). `Execution Coordinator::dispatch` and `::complete` enforce the legal construct → dispatch → complete sequence and nothing more; no actor logic is actually invoked.
@@ -165,16 +165,18 @@ Per ADR-0016, Runtime is the sole entity accountable for connecting Message Gate
 **Already implemented**, in order:
 
 1. Actor Host: `live_instance(&message.destination)` — the same existence check §9 already performs before admission, re-applied here (ARCH-002 §11 step 11: "Actor gone → abort, no execution").
-2. Execution Coordinator: `construct_context(&instance, &message)` — builds an `ExecutionContext`; rejects with `IllegalTransition` if `instance` already has an unfinished construction in progress (ARCH-002 §12's single-execution-ownership rule, enforced by direct construction).
-3. Execution Coordinator: `dispatch(context)` — advances the tracked execution from `Constructed` to `Dispatched`; rejects if the context was never legitimately constructed or was already dispatched.
-4. Execution Coordinator: `complete(context)` — removes the tracked execution entirely, freeing the instance for a subsequent execution; rejects if the context was never dispatched.
-5. Audit Emitter: `execution.completed` (ARCH-002 §18).
+2. Host Adapter: `allocate_execution_handle()` — acquires a Host Execution Handle for this execution (EWO-004). On failure (currently unreachable, since allocation is unconditional), no handle exists to release.
+3. Execution Coordinator: `construct_context(&instance, &message, handle)` — builds an `ExecutionContext`, embedding the handle Runtime just obtained (EWO-004); rejects with `IllegalTransition` if `instance` already has an unfinished construction in progress (ARCH-002 §12's single-execution-ownership rule, enforced by direct construction).
+4. Execution Coordinator: `dispatch(context)` — advances the tracked execution from `Constructed` to `Dispatched`; rejects if the context was never legitimately constructed or was already dispatched.
+5. Execution Coordinator: `complete(context)` — removes the tracked execution entirely, freeing the instance for a subsequent execution; rejects if the context was never dispatched.
+6. Host Adapter: `release_execution_handle(handle)` — releases the handle acquired in step 2 back to Host Adapter (EWO-004). If this fails, `execute_message` reports that failure instead of success, even though the execution itself completed.
+7. Audit Emitter: `execution.completed` (ARCH-002 §18).
 
-A failure at steps 1–4 emits `execution.failed` (ARCH-002 §18) and returns the triggering error, subject to the same audit-failure-fails-the-operation rule as §9.
+A failure at steps 1, 3, 4, or 5 releases the handle acquired in step 2 (if any was acquired) before emitting `execution.failed` (ARCH-002 §18) and returning the triggering error — or, if that release itself fails, the release's own error is returned instead, subject to the same "a later mandatory step's failure overrides the original error" rule already established for audit emission (ADR-0015; EWO-004, "Handle Lifecycle Invariant").
 
-**Already implemented but not integrated with a wider flow:** Capability Authority, Lifecycle Guardian, and Host Adapter are constructed as part of `TrustedCore` but are **not called anywhere in this flow**. `ExecutionContext.active_capabilities` is populated empty (Execution Coordinator has no path to Capability Authority's bindings for the instance); `ExecutionContext.host_execution_handle` is populated with the bare `HostExecutionHandle` value (Execution Coordinator has no path to Host Adapter); no call informs Lifecycle Guardian that the instance has entered `Executing`.
+**Already implemented but not integrated with a wider flow:** Capability Authority and Lifecycle Guardian are constructed as part of `TrustedCore` but are **not called anywhere in this flow**. `ExecutionContext.active_capabilities` is populated empty (Execution Coordinator has no path to Capability Authority's bindings for the instance); no call informs Lifecycle Guardian that the instance has entered `Executing`. `ExecutionContext.host_execution_handle` (EWO-004) now carries a genuine Host-Adapter-issued value, supplied by Runtime — Execution Coordinator itself still has no path to Host Adapter (§11).
 
-**Architecturally required for the integration phase, not yet performed:** capability revalidation at invocation (ARCH-002 §6's own stated Execution Coordinator responsibility); communicating dispatch start/end to Lifecycle Guardian, so that `Executing` becomes a state Lifecycle Guardian can actually observe (a precondition for suspend/restore reachability, §12); obtaining a Host Adapter-issued handle for `ExecutionContext.host_execution_handle` (§11).
+**Architecturally required for the integration phase, not yet performed:** capability revalidation at invocation (ARCH-002 §6's own stated Execution Coordinator responsibility); communicating dispatch start/end to Lifecycle Guardian, so that `Executing` becomes a state Lifecycle Guardian can actually observe (a precondition for suspend/restore reachability, §12).
 
 **Not required by the Minimal Runtime Profile at this milestone** (ARCH-002 §21): actual actor-defined message-handling logic being invoked; real host-level execution.
 
@@ -184,8 +186,8 @@ No claim is made anywhere in this section that the current runtime performs acto
 
 - `HostExecutionHandle` (`synapse-common`) is currently opaque and zero-field: `#[derive(Debug, Clone, Default)] pub struct HostExecutionHandle;`. It carries no thread id, process handle, or any other host-specific data, because it has no field to hold one.
 - Host Adapter's current implementation (SRP-007) tracks allocation/release **balance** internally (a single counter of currently-outstanding handles); it does not, and structurally cannot, verify a specific handle's identity or provenance, because the type it operates on carries none.
-- Execution Coordinator's `construct_context` currently does not call Host Adapter in any way. It populates `ExecutionContext.host_execution_handle` with the bare `HostExecutionHandle` marker value directly, never a value obtained from Host Adapter's `allocate_execution_handle`.
-- Connecting the two — so that a real execution actually holds a Host-Adapter-issued handle — requires a future, separately authorized decision about `Execution Coordinator`'s own trait signature (`construct_context` currently has no parameter through which a handle could be received). ARCH-003 identifies this boundary and the constraint that motivates it; it does not prescribe the resulting signature, which is unauthorized architecture at this document's own scope.
+- Execution Coordinator's `construct_context` still never calls Host Adapter directly, and Host Adapter still never calls Execution Coordinator directly (ADR-0016 unchanged) — but `construct_context` now accepts a `HostExecutionHandle` parameter (EWO-004) and embeds exactly the value it is given. Runtime obtains that value from Host Adapter's `allocate_execution_handle` before calling `construct_context`, and releases it back to Host Adapter via `release_execution_handle` after the execution concludes, on every path (§10).
+- This connection is now implemented (EWO-004): `construct_context`'s signature gained exactly one additional parameter to receive the handle — the minimum interface evolution EWO-004 itself authorized, per this document's own identification of the boundary above. No further signature change was made, and none is implied by this update.
 - No claim of unforgeability or distinct handle identity exists anywhere in current authority. ARCH-002 §10 requires `HostExecutionHandle` be opaque — a materially weaker property than the unforgeability ARCH-001 §5.2 requires of `Capability` — and the current implementation fully satisfies that weaker requirement. This is treated here as a known, disclosed constraint of the shared type's own definition, not automatically as an architectural defect requiring resolution by this document.
 
 ## 12. Lifecycle Integration
@@ -229,7 +231,7 @@ Every currently emitted audit event, its emitter, its trigger, and its integrati
 | `message.admitted` | Audit Emitter | `Runtime::submit_message` | Success only | Yes | No |
 | `capability.issued` | Audit Emitter | `Runtime::issue_capability` | Success only | Yes | No |
 | `execution.completed` | Audit Emitter | `Runtime::execute_message` | Success only | Yes | No |
-| `execution.failed` | Audit Emitter | `Runtime::execute_message` (via `fail_execution`) | Any rejection at steps 1–4 of §10 | Yes | No |
+| `execution.failed` | Audit Emitter | `Runtime::execute_message` (via `fail_execution`) | Any rejection at steps 1, 3, 4, or 5 of §10 (or a Host Adapter release failure at step 6, EWO-004) | Yes | No |
 | `actor.suspended` | Audit Emitter | `Runtime::suspend_actor_instance` | Success only | Yes, but currently unreachable in an integrated flow (§12) | Yes — depends on Execution Coordinator ↔ Lifecycle Guardian integration |
 | `actor.restored` | Audit Emitter | `Runtime::restore_actor_instance` | Success only | Yes, but currently unreachable in an integrated flow (§12) | Yes — same dependency |
 
@@ -239,7 +241,7 @@ No event beyond this table exists in the current implementation, and none is cre
 
 - **Validation-before-mutation ordering:** every flow in §7–§10 performs every rejection-capable check before any state-mutating call in the same flow (§6). No flow described in this document mutates any component's state before the checks that could reject the operation have all passed.
 - **Component error propagation:** every error a called component returns is either returned to the caller unchanged (e.g., Actor Host's `UnknownTarget`/`IllegalTransition` from creation, existence, or single-live-instance checks) or is the direct, undisguised cause of a narrower Runtime-level rejection (e.g., `reject_message`, `fail_execution`). No flow substitutes a different error for the one a component actually returned.
-- **Prevention of downstream side effects following rejection:** confirmed directly in §9 and §10 — a rejection at any numbered step in either flow prevents every later step in that same flow from running.
+- **Prevention of downstream side effects following rejection:** confirmed directly in §9 and §10 — a rejection at any numbered step in either flow prevents every later step in that same flow from running, with one disclosed exception (EWO-004): a rejection during Execution Context construction, dispatch, or completion (§10 steps 3–5) still causes the Host Execution Handle acquired at step 2 to be released at that point, out of its normal step-6 order, before `execution.failed` is emitted. This is deliberate compensating cleanup for an already-acquired resource, not continued forward progress of the rejected operation — no other component's state is touched, and the operation is still reported as failed.
 - **Audit behavior on rejected operations:** `message.rejected` and `execution.failed` are each emitted exactly once per rejection, per ARCH-002 §18; a rejection during actor creation, termination, or capability issuance carries no separate rejection-audit obligation, since ARCH-002 §18 names only the successful form of each of those three operations.
 - **Rollback limitations, stated plainly:** no operation described in this document performs rollback of already-committed component-level state when a later step fails. Concretely: if `create_actor_instance`'s own mandatory audit emission fails, the instance already created in Actor Host's own records is not un-created (ADR-0015, EWO-002's "Audit Failure Semantics"); if `submit_message`'s final admission-audit emission fails, the message already enqueued by Actor Host's `enqueue` is not removed. This is an existing, deliberate consequence of ADR-0015, not something this document introduces or extends.
 - **Recovery behavior left undefined or deferred:** what a caller should do after observing an audit-emission-caused failure with otherwise-committed component state (retry, discard, reconcile) is not defined by ARCH-002 or by this document — it remains deferred, consistent with ARCH-002 §23's Deferred Architecture table not yet addressing recovery policy. No transaction, compensating-action, or exactly-once semantics are invented here to fill that gap.
@@ -273,7 +275,6 @@ The following hold given the current implementation and ARCH-002's own authority
 The following is identified as future work, without prescribing implementation detail this document has no authority to fix:
 
 - Execution Coordinator ↔ Lifecycle Guardian integration, so that dispatch start/end become observable as `Executing`/`Idle` transitions in Lifecycle Guardian's own tracked state.
-- Execution Coordinator ↔ Host Adapter integration, so that `ExecutionContext.host_execution_handle` carries a genuinely Host-Adapter-issued value rather than the bare marker value.
 - The identity limitation of `HostExecutionHandle` (§11), if a future requirement demands distinguishing specific handles from one another — this would require a change to the shared type itself, outside Host Adapter's or Execution Coordinator's own scope, and outside this document's authority to resolve.
 - A complete actor execution flow, including actual actor-defined message-handling logic being invoked during dispatch.
 - Capability revalidation during restoration, per ARCH-002 §9's "joint act" assignment, once Lifecycle Guardian and Capability Authority have an authorized interaction path.
@@ -352,23 +353,24 @@ Message Gateway: validate_envelope                   |
   v                                                 Actor Host: live_instance(dest)
 Message Gateway: validate_send_authority              | reject -> execution.failed, return Err
   | reject -> message.rejected, return Err            v
-  v                                                 Execution Coordinator: construct_context
-Capability Authority: validate(presented)              | reject -> execution.failed, return Err
+  v                                                 Host Adapter: allocate_execution_handle()
+Capability Authority: validate(presented)              | fail -> execution.failed, return Err  (EWO-004)
+  | reject -> message.rejected, return Err            v
+  v                                                 Execution Coordinator: construct_context(handle)
+Actor Host: live_instance(destination)                 | reject -> release handle, execution.failed  (EWO-004)
   | reject -> message.rejected, return Err            v
   v                                                 Execution Coordinator: dispatch(context)
-Actor Host: live_instance(destination)                 | reject -> execution.failed, return Err
+Message Gateway: admit(message)                         | reject -> release handle, execution.failed  (EWO-004)
   | reject -> message.rejected, return Err            v
   v                                                 Execution Coordinator: complete(context)
-Message Gateway: admit(message)                         | reject -> execution.failed, return Err
-  | reject -> message.rejected, return Err            v
-  v                                                 Audit Emitter: emit "execution.completed"
-Actor Host: enqueue(instance, message)
-  |
-  v
-Audit Emitter: emit "message.admitted"
+Actor Host: enqueue(instance, message)                   | reject -> release handle, execution.failed  (EWO-004)
+  |                                                     v
+  v                                                 Host Adapter: release_execution_handle(handle)  (EWO-004)
+Audit Emitter: emit "message.admitted"                   | fail -> execution.failed, return Err
+                                                        v
+                                                      Audit Emitter: emit "execution.completed"
 
   [ DEFERRED — not called by either flow above: ]
-  [   Host Adapter (never invoked anywhere)      ]
   [   Lifecycle Guardian (never invoked here)    ]
   [   actor-defined message handling (does not exist yet) ]
 ```
@@ -406,7 +408,7 @@ Runtime (sequences only; owns Runtime-level state and TrustedCore)
   +-- calls --> Execution Coordinator (context construction, dispatch, completion)
   +-- calls --> Lifecycle Guardian    (transition legality, suspend, restore)
   +-- calls --> Audit Emitter         (every event in §14)
-  +-- constructs, never calls --> Host Adapter
+  +-- calls --> Host Adapter          (allocate_execution_handle, release_execution_handle — EWO-004)
 
   No line above this box exists between any two Trusted Core components
   directly (ADR-0016) -- every connection shown is Runtime-mediated.
@@ -424,13 +426,16 @@ Runtime (sequences only; owns Runtime-level state and TrustedCore)
 - GOV-003 — Governance Model
 - GOV-010 — Decision Framework
 - STD-001 — Documentation Standards
-- `synapse-runtime` @ `ee0b691383c11009538809542e4f1cd185020dc9`: `runtime/src/lib.rs`, `core/actor-host/src/internal.rs`, `core/message-gateway/src/internal.rs`, `core/capability-authority/src/internal.rs`, `core/execution-coordinator/src/internal.rs`, `core/lifecycle-guardian/src/internal.rs`, `core/host-adapter/src/internal.rs`
+- `synapse-runtime` @ `01047157b6783d816fed80361b40206a98ba6f2f`: `runtime/src/lib.rs`, `core/actor-host/src/internal.rs`, `core/message-gateway/src/internal.rs`, `core/capability-authority/src/internal.rs`, `core/execution-coordinator/src/internal.rs`, `core/lifecycle-guardian/src/internal.rs`, `core/host-adapter/src/internal.rs`
+- EWO-004 — Runtime Integration Bootstrap — Host Execution Handle Binding (work-orders/EWO-004-Runtime-Integration-Bootstrap.md)
+- ER-004 — Runtime Integration Bootstrap — Host Execution Handle Binding — Engineering Report (engineering-reports/ER-004-Runtime-Integration-Bootstrap.md)
 
 ## 23. Change History
 
 | Version | Date | Author | Description |
 |---|---|---|---|
 | 0.1.0 | 2026-07-13 | Denver Jacobs | Initial Draft. Defines Trusted Core runtime integration status against the committed `synapse-runtime` implementation through SRP-007 (Host Adapter). Records current integration baseline, integration principles, per-flow sequencing, host-execution-handle boundary, lifecycle-integration reachability limitations, capability-enforcement boundary, audit integration, failure propagation, integration invariants, and deferred integration work. Does not redesign or supersede ARCH-002. |
+| 0.2.0 | 2026-07-13 | Denver Jacobs | Conformance update per §20, recording EWO-004/ER-004's completion: Execution Coordinator ↔ Host Adapter integration is now implemented and integrated. Updated §5 (moved this item from the incomplete-flows list to a newly-implemented statement), §10 (execution flow now shows Host Adapter allocation/release around Execution Coordinator's construct/dispatch/complete sequence), §11 (the previously-identified boundary is now closed, by exactly the minimum interface evolution ARCH-003 itself anticipated), §18 (removed the now-completed deferred-work item), §21 (both diagrams updated to show the real Host Adapter calls and remove it from the deferred callouts), and §22 (evidentiary commit hash updated to the post-EWO-004 commit; EWO-004/ER-004 added as references). No architectural principle, ownership boundary, interaction model, Runtime sequencing rule, Trusted Core boundary, or design rationale was changed — every edit restates already-published architecture (ARCH-002 §6/§10, ADR-0016) as now-realized implementation status, per this document's own §20 conformance requirement. |
 
 ## 24. Approval Status
 
