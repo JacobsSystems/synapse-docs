@@ -3,7 +3,7 @@ document_id: ARCH-002
 title: Runtime Architecture
 project: SynapseOS
 specification: SynapseOS — Runtime architecture realizing ARCH-001's constitutional concepts
-version: 0.1.0
+version: 0.2.0
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -11,7 +11,7 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-11
-last_updated: 2026-07-11
+last_updated: 2026-07-13
 classification: Public
 related_documents:
   governance:
@@ -163,6 +163,8 @@ Execution Context is the Runtime-layer data structure realizing ARCH-001's Execu
 
 Execution Context MUST NOT become an authority source (it composes references, it does not itself grant), a global or shared object, an application session, a container for arbitrary services, or the owner of any constitutional concept. One Execution Context is bounded to exactly one message-processing cycle — no departure from this boundary is justified against ARCH-001, and none is proposed here.
 
+**Relationship to Actor lifecycle state (§15).** An Execution Context's own existence — from construction through completion, suspension, or failure — is the concrete, mechanism-level realization of the Actor lifecycle's `Executing` state (§15) for the specific instance it belongs to. An actor instance is truthfully `Executing` if and only if it currently owns a live Execution Context (one that has been constructed and has not yet reached completion, suspension, or failure); it is not `Executing` at any other time, and no other condition may be used to justify marking it so. Execution Coordinator owns the Execution Context's own, finer-grained progress (construction, dispatch, completion — mechanism detail, §11 steps 10–12, 18); Lifecycle Guardian owns the actor instance's coarser-grained `Executing` state as one state among the Actor lifecycle's own set (§15; §11 step 19). These are two views of the same underlying fact, at two different levels of detail — not two independent state models that could diverge, and neither component holds authority over the other's own tracked state.
+
 ## 11. Constitutional Execution Cycle
 
 | # | Step | Responsible | Trust | Key invariant | Failure → resulting state |
@@ -190,6 +192,8 @@ Execution Context MUST NOT become an authority source (it composes references, i
 
 Step 17's "Consumer failure MUST NOT block execution" governs only downstream Audit Pipeline (consumer) failure, per §6's Audit Pipeline entry. It does not extend to Audit Emitter's own emission failing: per ADR-0015, where a step above requires mandatory audit emission, failure of that emission causes the step's own operation to fail before it may be reported successful. This does not cause Runtime-level failure and does not alter any other step's stated failure behavior.
 
+No step above is separately titled "actor enters Executing," because entering `Executing` is not a distinct trusted act of its own — it is the direct, definitional consequence of step 11 (Execution Context construction) succeeding, per §10's coupling rule. Lifecycle Guardian's own responsibility for lifecycle-transition validity (§6) already covers this transition's legality exactly as it covers every other Actor-state transition; step 11's own "Responsible" column (Execution Coordinator) governs the Execution Context's own construction, not a separate act of marking the actor `Executing`. The two are the same underlying event, viewed at two levels of detail.
+
 ## 12. Concurrency Model
 
 **Problem.** Whether one actor may process more than one message at a time determines whether the actor model's core promise — private state reasoned about without internal concurrency hazards — actually holds.
@@ -197,6 +201,8 @@ Step 17's "Consumer failure MUST NOT block execution" governs only downstream Au
 **Trade-off analysis.** Allowing concurrent processing within one actor would require the actor's own logic to internally synchronize state, reintroducing exactly the shared-mutable-state hazard class the model exists to avoid, and would blur the "one execution, one message-processing cycle" boundary into ambiguous overlapping cycles.
 
 **Selected architecture.** An actor instance processes at most one message at a time; the next message on that instance does not begin until the current execution completes. This is independently justified for SynapseOS by the consequence above, not by convention. Reentrancy is excluded by direct construction: while an actor is Executing, it is not eligible for a new dispatch. Ordering within one actor's mailbox matches admission order, a mechanism-level guarantee; ordering *across* different senders relative to each other is not guaranteed deterministic absent a specific transport choice (deferred). Concurrency *across* actors is unrestricted — this is the system's source of parallelism. The Scheduler MUST NOT starve a ready actor indefinitely; the specific fairness algorithm is deferred. Every execution is bounded: it carries a deadline and budget via Execution Context, and unbounded (run-forever) execution cycles are disallowed by construction. Cancellation is cooperative — the architectural contract requires actor logic to observe cancellation state; forceful preemption of arbitrary in-progress logic is a host/implementation capability, not constitutionally guaranteed. Mailbox capacity MUST be finite and enforced; the specific bound is a deployment parameter.
+
+**Truthfulness of `Executing` across Runtime API call boundaries.** `Executing` is true for an actor instance for exactly as long as that instance has a live Execution Context (§10) — never longer, and never merely to satisfy a caller's expectation that a dependent capability be reachable. The Minimal Runtime Profile (§21) does not require a concurrent, asynchronous, or otherwise interruptible execution mechanism, and the current Runtime implementation provides none: because one Execution Context is bounded to exactly one message-processing cycle (§10), and the current implementation performs that cycle synchronously and without interruption, no Runtime-level call other than the one currently performing a given execution can observe that instance as genuinely `Executing` today — every other call necessarily arrives either before the cycle begins or after it has already concluded. This is a direct, honest consequence of the current implementation's own synchronous execution model, not a requirement §21 imposes and not a defect calling for a workaround. Lifecycle state MUST represent the Runtime's actual, current condition; it MUST NOT be held, extended, or otherwise made to outlive the genuine fact it represents in order to make a dependent capability (such as suspension) appear reachable when it is not. A Runtime that gains a genuinely concurrent, asynchronous, or otherwise interruptible execution mechanism remains fully conformant with the Minimal Runtime Profile and may observe `Executing` from a separate call while the cycle is still genuinely in progress; nothing here forecloses that future architecture, and nothing here requires it now.
 
 ## 13. Mailbox Model
 
@@ -223,6 +229,8 @@ Candidate states were not accepted automatically; only states with distinct arch
 **Message:** Created → {Admitted → Dispatched → Consumed} or {Rejected} or {Admitted → Expired}.
 
 **Runtime:** Initializing → Running → Stopping → {Stopped | Failed}. A distinct Failed state (rather than folding into Stopped) is retained because operators and audit consumers must be able to distinguish a clean shutdown from a trusted-core integrity halt (§16).
+
+**Two state machines, one coupling rule.** The Actor state machine above and the Execution Context state machine above are deliberately distinct (§10), not competing definitions of the same thing: Actor state is Lifecycle Guardian's own responsibility (§6; §11 step 19); Execution Context state is Execution Coordinator's own responsibility (§6; §11 steps 10–12, 18). They are coupled by exactly one rule, stated here because it does not otherwise follow automatically from either machine's own transition table in isolation: an actor instance's Actor-level state is `Executing` if and only if that instance currently owns a live Execution Context, and the instant that Execution Context reaches `Completed`, `Suspended`, or `Failed`, the actor instance's own state transitions onward from `Executing` accordingly, along the edges already listed above (`Executing → {Idle | Suspended | Failed | Stopping}`). Neither component holds authority over the other's own state; each owns exactly its own machine, and this coupling rule is what keeps the two consistent without either duplicating the other's tracked state. See §10 and §12 for the resulting truthfulness constraint and its consequence for a synchronous Runtime.
 
 Deeper lifecycle *policy* — supervision strategy, restart backoff, detailed sub-states beyond architectural significance — is deferred to a later Lifecycle Architecture document; this section defines only what the first working Runtime requires.
 
@@ -411,3 +419,18 @@ TRUSTED CORE (minimal, unbypassable)          REPLACEABLE SERVICES (policy, exte
   Failure here => fail-stop                     Failure here => contained,
   (Runtime-integrity threatening)                  never threatens the core
 ```
+
+## 26. Change History
+
+| Version | Date | Author | Description |
+|---------|------|--------|-------------|
+| 0.1.0 | 2026-07-11 | Denver Jacobs | Initial Draft. |
+| 0.2.0 | 2026-07-13 | Denver Jacobs | Semantic clarification, prompted by EWO-005 planning review: made explicit a consequence of already-published text that had never been stated directly, closing a genuine ambiguity (not a design change) about the relationship between the Actor lifecycle's `Executing` state (§15) and the Execution Context state machine (§10). Added: a "Relationship to Actor lifecycle state" paragraph to §10, establishing that an actor instance is truthfully `Executing` if and only if it currently owns a live Execution Context, and assigning ownership (Lifecycle Guardian: Actor-level `Executing`; Execution Coordinator: Execution-Context-level progress) without transferring either component's own §6 responsibility; a clarifying paragraph after the §11 Constitutional Execution Cycle table explaining why no step is separately titled "actor enters Executing" (it is the direct consequence of step 11 succeeding, not a distinct trusted act); a "Truthfulness of `Executing` across Runtime API call boundaries" paragraph to §12, stating that lifecycle state MUST represent the Runtime's actual, current condition and MUST NOT be extended or held beyond the genuine duration of the fact it represents, and the direct consequence that the current implementation, which is synchronous (though the Minimal Runtime Profile, §21, does not require this), cannot have any call other than the one currently executing observe an instance as `Executing`; and a "Two state machines, one coupling rule" paragraph to §15, stating the exact rule that couples the two machines. No state was renamed, removed, or added. No guarantee, ownership boundary (beyond making an already-settled §6 assignment explicit), or constitutional concept was altered. No new Trusted Core component, mechanism, or peer-interaction path was introduced; ADR-0016's Rule 1/Rule 2 are unaffected. Added this Change History and the Approval Status section below — neither previously existed in this document. |
+
+## 27. Approval Status
+
+| Role | Name | Status | Date |
+|------|------|--------|------|
+| Author | Denver Jacobs | Drafted | 2026-07-11 |
+| Technical Review | TBD | Pending | |
+| Approval Authority | Chief Architect (vacant); Founder (interim) | Pending | |
