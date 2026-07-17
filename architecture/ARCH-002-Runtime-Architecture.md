@@ -3,7 +3,7 @@ document_id: ARCH-002
 title: Runtime Architecture
 project: SynapseOS
 specification: SynapseOS — Runtime architecture realizing ARCH-001's constitutional concepts
-version: 0.2.0
+version: 0.2.1
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -11,7 +11,7 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-11
-last_updated: 2026-07-13
+last_updated: 2026-07-17
 classification: Public
 related_documents:
   governance:
@@ -147,7 +147,7 @@ An actor has a **logical identity**, assigned once at definition, stable across 
 
 The Runtime message envelope contains: a unique, immutable message identity; message type (load-bearing — capability-based type restriction depends on it); sender identity (for causation and audit, never for authority); destination (validated against a presented capability, never trusted alone); payload (opaque to the Runtime); causation identity; correlation identity; delivery constraints (explicit, never an ambient default); durability classification (explicit per message, never ambient); deadline; replay-protection information; a distinct capability-transfer section, for capabilities an actor deliberately delegates via this message; information classification; and trace metadata.
 
-Message *content* (actor-defined payload), the Runtime *envelope* (structural fields above), *send authority* (the capability Message Gateway checks before admission), *deliberately transferred capabilities* (the transfer section — an application-level choice, distinct from send authority), and *operational trace information* (Runtime-managed) are four distinct concerns and MUST NOT be conflated. The Runtime MUST NOT treat a destination identifier as send authority. The Runtime MUST validate authority before mailbox admission, before any recipient-controlled processing occurs.
+Message *content* (actor-defined payload), the Runtime *envelope* (structural fields above), *send authority* (the capability Message Gateway checks before admission), *deliberately transferred capabilities* (the transfer section — an application-level choice, distinct from send authority), and *operational trace information* (Runtime-managed) are five distinct concerns and MUST NOT be conflated. The Runtime MUST NOT treat a destination identifier as send authority. The Runtime MUST validate authority before mailbox admission, before any recipient-controlled processing occurs.
 
 ## 9. Capability Runtime Representation
 
@@ -426,6 +426,7 @@ TRUSTED CORE (minimal, unbypassable)          REPLACEABLE SERVICES (policy, exte
 |---------|------|--------|-------------|
 | 0.1.0 | 2026-07-11 | Denver Jacobs | Initial Draft. |
 | 0.2.0 | 2026-07-13 | Denver Jacobs | Semantic clarification, prompted by EWO-005 planning review: made explicit a consequence of already-published text that had never been stated directly, closing a genuine ambiguity (not a design change) about the relationship between the Actor lifecycle's `Executing` state (§15) and the Execution Context state machine (§10). Added: a "Relationship to Actor lifecycle state" paragraph to §10, establishing that an actor instance is truthfully `Executing` if and only if it currently owns a live Execution Context, and assigning ownership (Lifecycle Guardian: Actor-level `Executing`; Execution Coordinator: Execution-Context-level progress) without transferring either component's own §6 responsibility; a clarifying paragraph after the §11 Constitutional Execution Cycle table explaining why no step is separately titled "actor enters Executing" (it is the direct consequence of step 11 succeeding, not a distinct trusted act); a "Truthfulness of `Executing` across Runtime API call boundaries" paragraph to §12, stating that lifecycle state MUST represent the Runtime's actual, current condition and MUST NOT be extended or held beyond the genuine duration of the fact it represents, and the direct consequence that the current implementation, which is synchronous (though the Minimal Runtime Profile, §21, does not require this), cannot have any call other than the one currently executing observe an instance as `Executing`; and a "Two state machines, one coupling rule" paragraph to §15, stating the exact rule that couples the two machines. No state was renamed, removed, or added. No guarantee, ownership boundary (beyond making an already-settled §6 assignment explicit), or constitutional concept was altered. No new Trusted Core component, mechanism, or peer-interaction path was introduced; ADR-0016's Rule 1/Rule 2 are unaffected. Added this Change History and the Approval Status section below — neither previously existed in this document. |
+| 0.2.1 | 2026-07-17 | Denver Jacobs (AI-assisted, EWO-010) | Editorial correction only, per EWO-010 (Architecture Consistency Corrections): §8 labeled its own enumeration of five elements (content, envelope, send authority, deliberately transferred capabilities, operational trace information) as "four distinct concerns." Corrected "four" to "five" to match the enumeration already present. This discrepancy was independently identified during RES-002's comparative research review, preserved without correction through RSS-001 and ACR-001 (each declining to resolve it, having no authority to edit this document), and is corrected here now that a properly scoped, evidence-based correction task exists. No concern was added, removed, redefined, or reordered; no architectural principle, guarantee, or ownership boundary was changed. Classified PATCH (STD-001 §27: editorial wording only). |
 
 ## 27. Approval Status
 

@@ -3,7 +3,7 @@ document_id: ARCH-003
 title: Runtime Integration Architecture
 project: SynapseOS
 specification: SynapseOS — how the published Trusted Core components integrate into one coherent runtime, realizing ARCH-002
-version: 0.4.0
+version: 0.5.0
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -11,18 +11,19 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-13
-last_updated: 2026-07-13
+last_updated: 2026-07-17
 classification: Public
 related_documents:
   governance:
     - GOV-003 (Approved, Act 2)
     - GOV-010 (Approved, Act 2)
   standards:
-    - STD-001 (Approved)
+    - STD-001 (v0.1.0 and v0.2.0 Approved via normal-governance disposition; current v0.4.0 content not separately approved — see STD-001's own Approval Status section)
   architecture:
     - ARCH-000 (Draft — whole-system introduction)
     - ARCH-001 (Draft — constitutional foundation)
     - ARCH-002 (Draft — Runtime architecture this document integrates)
+    - ARCH-006 (Draft — Runtime Actor Execution Architecture; records the milestone that closes this document's own end-to-end actor-execution gap, §5)
   rfcs: None
   adrs:
     - ADR-0011 (Draft, Act 1 effective)
@@ -33,7 +34,7 @@ related_documents:
   research: None
   operational: None
   source_artifacts:
-    - synapse-runtime @ 5ccc7f9083a71adc6ee704b2322a701935765679 (SRP-001 through SRP-007; EWO-004 Runtime Integration Bootstrap — Host Execution Handle Binding; EWO-005 Truthful Actor Execution-State Tracking)
+    - synapse-runtime @ 0e4c5c9e8d27be6bfb00fb26ef19995258ad7ed7 (SRP-001 through SRP-007; EWO-004 Runtime Integration Bootstrap — Host Execution Handle Binding; EWO-005 Truthful Actor Execution-State Tracking; EWO-009 Runtime Actor Execution — genuine actor-defined message-handling logic, independently verified present at this commit by EWO-010's own repository check, §5)
 supersedes: None
 superseded_by: None
 ai_assistance: Drafting
@@ -53,7 +54,7 @@ ai_assistance: Drafting
 |---|---|
 | Document ID | ARCH-003 |
 | Title | Runtime Integration Architecture |
-| Version | 0.4.0 |
+| Version | 0.5.0 |
 | Status | **Draft** |
 | Author | Denver Jacobs |
 | Approval authority | Chief Architect (Class B, per GOV-010 §5), vacant; Founder (interim) |
@@ -81,20 +82,20 @@ ARCH-003 defines how the seven Trusted Core components ARCH-002 §6 already spec
 - **ADR-0015** (Audit Emitter Failure Semantics) governs every audit-emission failure behavior described in §14–§15 below: where an operation carries a mandatory audit obligation, failure of that emission fails the operation's own report to its caller, with no rollback of already-committed component-level state.
 - **ADR-0017** (Bootstrap Capability Trust Root) governs the capability-issuance boundary referenced in §13.
 - **Governance (GOV-003, GOV-010)** and **STD-001** govern this document's own review, approval, and evidentiary process; they are not architectural inputs to its content.
-- **Existing implementation** (`synapse-runtime` @ `5ccc7f9083a71adc6ee704b2322a701935765679`) is treated as evidence, not as authority: where implementation and ARCH-002 appear to diverge, ARCH-002 governs, and the divergence is recorded as a defect or as deferred work, never silently reconciled by describing the implementation as if it were the architecture.
+- **Existing implementation** (`synapse-runtime` @ `0e4c5c9e8d27be6bfb00fb26ef19995258ad7ed7`) is treated as evidence, not as authority: where implementation and ARCH-002 appear to diverge, ARCH-002 governs, and the divergence is recorded as a defect or as deferred work, never silently reconciled by describing the implementation as if it were the architecture.
 
 Component responsibilities, ownership, and prohibitions remain exactly as ARCH-002 §6 states them. ARCH-003 adds no new responsibility to any component and removes none.
 
 ## 5. Current Implementation Baseline
 
-Verified directly against `synapse-runtime` @ `5ccc7f9083a71adc6ee704b2322a701935765679` (`runtime/src/lib.rs` and each Trusted Core crate's `src/internal.rs`), not assumed:
+Verified directly against `synapse-runtime` @ `0e4c5c9e8d27be6bfb00fb26ef19995258ad7ed7` (`runtime/src/lib.rs` and each Trusted Core crate's `src/internal.rs`), not assumed:
 
 - All seven Trusted Core components are implemented and published: Runtime Bootstrap (SRP-001), Actor Host (SRP-002), Message Gateway (SRP-003), Capability Authority (SRP-004), Execution Coordinator (SRP-005), Lifecycle Guardian (SRP-006), Host Adapter (SRP-007).
 - **Execution Coordinator ↔ Host Adapter integration is implemented (EWO-004; ER-004).** `Runtime::execute_message` obtains a Host Execution Handle from Host Adapter's `allocate_execution_handle` before Execution Coordinator constructs the Execution Context for that execution, supplies the handle so the returned context genuinely carries it, and releases the same handle back to Host Adapter's `release_execution_handle` after the execution concludes, on every path — successful completion, or rejection during construction, dispatch, or completion. Execution Coordinator still never calls Host Adapter directly, and Host Adapter still never calls Execution Coordinator directly — Runtime alone connects them (ADR-0016), exactly as this document's own Integration Invariants (§17, invariants 6–7) already required of any such connection.
 - **Execution Coordinator ↔ Lifecycle Guardian truthful execution-state tracking is implemented (EWO-005; ER-005).** `Runtime::execute_message` now sequences a read-only Lifecycle Guardian prevalidation (`validate_transition(instance, Executing)`) before Host Adapter allocation and Execution Context construction; marks the instance `Executing` in Lifecycle Guardian's own tracked state (`begin_execution`) immediately after Execution Context construction succeeds; and transitions the instance back to `Idle` (`complete_execution`) immediately after Execution Context completion succeeds, before handle release or audit emission. On an authorized rejection path — dispatch or completion rejection — Lifecycle Guardian instead transitions the instance to `Failed` (`fail_execution`) before the existing handle-release and `execution.failed` audit behaviour run. Execution Coordinator still never calls Lifecycle Guardian directly, and Lifecycle Guardian still never calls Execution Coordinator directly — Runtime alone connects them (ADR-0016), exactly as this document's own Integration Invariants (§17, invariant 7) already required. A pre-existing Execution Coordinator limitation remains, disclosed and unresolved by this milestone: on the dispatch/completion-rejection path — reachable today only through Execution Coordinator's own internal test-state seeding, never through genuine sequential public Runtime use — Execution Coordinator's private tracked entry for that execution is not cleaned up, since no public Execution Coordinator interface exists to do so outside a successful completion, even though Lifecycle Guardian's own state is correctly made truthful (`Failed`). This does not make the actor appear falsely `Executing`; it is confined entirely to Execution Coordinator's own internal bookkeeping. See §12 for the continued, separate, and still-unreachable question of suspend/restore against an actively-executing instance, which this integration does not resolve.
+- **Genuine actor-defined message-handling logic is now invoked, end-to-end (EWO-009; ER-009; realizing ARCH-006).** Execution Coordinator genuinely invokes actor-defined `Actor::handle()` logic, mediated exclusively through `Runtime::step()`/`run_until_idle()`. An actor's own emitted messages are treated as fresh admission requests — never already-sent facts — with Runtime-owned causation and authority resolution, converging through the same single, shared admission pipeline every message origin (external, actor-emitted) already used for externally-submitted messages (§9). This closes the gap this document previously recorded here as "no actor-defined message-handling logic exists anywhere in the workspace" — independently re-verified present at the commit identified in §5's header (`fn handle` implementations and actor-to-actor messaging tests directly observed in the current working tree). `Execution Coordinator::dispatch` and `::complete` continue to enforce the legal construct → dispatch → complete sequence exactly as before; genuine actor logic now runs within it, per ARCH-006's own architectural record of this milestone.
 - Several cross-component runtime flows remain incomplete. Specifically:
   - **Successful suspend and restore paths remain currently unreachable through the Runtime's own public API — now for a different, more precise reason (EWO-005).** Lifecycle Guardian's `suspend` is legal only from `Executing` (ARCH-002 §15's only edge into `Suspended`). As of EWO-005, `Runtime::execute_message` genuinely, truthfully marks an instance `Executing` in Lifecycle Guardian's own tracked state for the duration of its live Execution Context — but only within that one synchronous call's own span; the instance has already left `Executing` again by the time `execute_message` returns. Per ARCH-002 §12, no Runtime API call other than the one currently performing a given execution can observe that instance as `Executing` in the current, fully synchronous implementation. Consequently `Runtime::suspend_actor_instance` still observes `IllegalTransition` for any genuinely live instance reached through the rest of the Runtime's own public API, and `Runtime::restore_actor_instance` (legal only from `Suspended`) remains transitively unreachable for the same reason — not because Lifecycle Guardian's state is untruthful (it no longer is), but because no separate call can ever arrive while that state is genuinely `Executing`. See §12 for the full account. Both methods remain correctly implemented and independently exercisable (each crate's own tests, using a test-only state seam scoped to that crate, prove the success path exists), but neither succeeds via any sequence the Runtime's committed, integrated API actually offers today.
-  - **End-to-end actor execution is not demonstrated.** No actor-defined message-handling logic exists anywhere in the workspace (ARCH-002 §7 requires the contract exist and be triggered; it does not require it be written by this milestone). `Execution Coordinator::dispatch` and `::complete` enforce the legal construct → dispatch → complete sequence and nothing more; no actor logic is actually invoked.
   - **Capability revalidation at invocation is not performed.** ARCH-002 §6 lists it among Execution Coordinator's responsibilities ("performs capability revalidation at invocation where required"); `construct_context` populates `ExecutionContext.active_capabilities` with an empty set, because its own signature supplies no path to Capability Authority's current bindings for the instance (ADR-0016).
   - **Restoration performs no capability revalidation.** ARCH-002 §9 assigns restoration validation as "a joint act: Lifecycle Guardian triggers it on resume; Capability Authority performs it." Lifecycle Guardian has no path to Capability Authority (ADR-0016); `restore` performs only the state transition (`Suspended` → `Idle`) it can honestly own.
   - **Mailbox capacity is currently unbounded, and overflow is unhandled.** ARCH-002 §13 states bounded, finite mailbox capacity is a mechanism-level MUST, with a mandatory, audited, non-silent response to overflow; §22 lists "bounded mailboxes" among its Mandatory conformance requirements. Actor Host's current mailbox storage (`mailboxes: HashMap<ActorInstanceId, Vec<Message>>`) is unbounded by construction — `enqueue` always succeeds if the target instance exists, regardless of how many messages are already queued — and no overflow-audit event exists because overflow can never occur. This is disclosed in Actor Host's own module documentation as out of scope for the current milestone; it is recorded here because it is a mandatory ARCH-002 conformance item, not merely a convenience gap.
@@ -181,9 +182,9 @@ A failure at step 1 or step 2 causes immediate rejection before any handle is al
 
 **Architecturally required for the integration phase, not yet performed:** capability revalidation at invocation (ARCH-002 §6's own stated Execution Coordinator responsibility). Communicating dispatch start/end to Lifecycle Guardian — previously listed here as required — is now implemented (EWO-005, steps 2/5/8 above); as anticipated, this was necessary but not sufficient for suspend/restore reachability against an actively executing instance; see §12 for why.
 
-**Not required by the Minimal Runtime Profile at this milestone** (ARCH-002 §21): actual actor-defined message-handling logic being invoked; real host-level execution.
+**No longer applicable, as of EWO-009 (see §5):** actor-defined message-handling logic being invoked is now genuinely performed by this flow, mediated through `Runtime::step()`/`run_until_idle()`, not merely `execute_message` in isolation. **Still not required by the Minimal Runtime Profile at this milestone** (ARCH-002 §21): real host-level execution (sandboxing, process/thread isolation, or any other host-specific execution boundary) — this remains a separate, still-deferred concern from actor-logic invocation itself (§19).
 
-No claim is made anywhere in this section that the current runtime performs actor logic. It performs exactly the mechanism ARCH-002 assigns Execution Coordinator — enforcing the legal construct/dispatch/complete sequence — and nothing beyond it.
+This section's Execution Coordinator flow (steps 1–10 above) performs exactly the mechanism ARCH-002 assigns it — enforcing the legal construct/dispatch/complete sequence. Genuine invocation of the actor-defined logic that sequence dispatches to is now performed by `Runtime::step()`/`run_until_idle()`, layered on top of this same flow, per EWO-009/ARCH-006, and is no longer absent as this section previously stated.
 
 ## 11. Host Execution-Handle Boundary
 
@@ -279,7 +280,6 @@ The following is identified as future work, without prescribing implementation d
 
 - **Genuine suspend/restore reachability against an actively-executing instance:** unreachable until the Runtime gains a real asynchronous, concurrent, or otherwise interruptible execution mechanism — within a synchronous Runtime, no call other than the one currently performing an execution can ever observe that instance as `Executing` (ARCH-002 §12), regardless of how faithfully Lifecycle Guardian's state otherwise tracks it (and it now does track it faithfully — EWO-005; §5, §12). This is a materially larger prerequisite, not unlocked by EWO-005's truthful-tracking milestone.
 - The identity limitation of `HostExecutionHandle` (§11), if a future requirement demands distinguishing specific handles from one another — this would require a change to the shared type itself, outside Host Adapter's or Execution Coordinator's own scope, and outside this document's authority to resolve.
-- A complete actor execution flow, including actual actor-defined message-handling logic being invoked during dispatch.
 - Capability revalidation during restoration, per ARCH-002 §9's "joint act" assignment, once Lifecycle Guardian and Capability Authority have an authorized interaction path.
 - Capability revalidation at invocation, per ARCH-002 §6's Execution Coordinator responsibility, once Execution Coordinator and Capability Authority have an authorized interaction path.
 - Bounded mailbox capacity and audited overflow handling (ARCH-002 §13, §22 — currently unbounded and unenforced; see §5, §9).
@@ -386,8 +386,10 @@ Audit Emitter: emit "message.admitted"             Execution Coordinator: dispat
                                                         v
                                                       Audit Emitter: emit "execution.completed"
 
-  [ DEFERRED — not called by either flow above: ]
-  [   actor-defined message handling (does not exist yet) ]
+  [ Actor-defined message handling is now genuinely invoked (EWO-009), ]
+  [ through Runtime::step()/run_until_idle(), layered on this flow —   ]
+  [ see §5. Real host-level execution (sandboxing, process/thread      ]
+  [ isolation) remains deferred (§19).                                 ]
 ```
 
 **Lifecycle ownership map**
@@ -441,6 +443,7 @@ Runtime (sequences only; owns Runtime-level state and TrustedCore)
 - ARCH-000 — Introduction
 - ARCH-001 — Constitutional Architecture
 - ARCH-002 — Runtime Architecture
+- ARCH-006 — Runtime Actor Execution Architecture (§10, §11 — the architectural record of the milestone that closes this document's own end-to-end actor-execution gap, §5)
 - ADR-0011 — Bootstrap Approval Authority
 - ADR-0015 — Audit Emitter Failure Semantics
 - ADR-0016 — Trusted Core Interaction Rule
@@ -448,11 +451,13 @@ Runtime (sequences only; owns Runtime-level state and TrustedCore)
 - GOV-003 — Governance Model
 - GOV-010 — Decision Framework
 - STD-001 — Documentation Standards
-- `synapse-runtime` @ `5ccc7f9083a71adc6ee704b2322a701935765679`: `runtime/src/lib.rs`, `core/actor-host/src/internal.rs`, `core/message-gateway/src/internal.rs`, `core/capability-authority/src/internal.rs`, `core/execution-coordinator/src/internal.rs`, `core/lifecycle-guardian/src/internal.rs`, `core/host-adapter/src/internal.rs`
+- `synapse-runtime` @ `0e4c5c9e8d27be6bfb00fb26ef19995258ad7ed7`: `runtime/src/lib.rs`, `core/actor-host/src/internal.rs`, `core/message-gateway/src/internal.rs`, `core/capability-authority/src/internal.rs`, `core/execution-coordinator/src/internal.rs`, `core/lifecycle-guardian/src/internal.rs`, `core/host-adapter/src/internal.rs`
 - EWO-004 — Runtime Integration Bootstrap — Host Execution Handle Binding (work-orders/EWO-004-Runtime-Integration-Bootstrap.md)
 - ER-004 — Runtime Integration Bootstrap — Host Execution Handle Binding — Engineering Report (engineering-reports/ER-004-Runtime-Integration-Bootstrap.md)
 - EWO-005 — Runtime Integration: Truthful Actor Execution-State Tracking (work-orders/EWO-005-Truthful-Execution-State-Tracking.md)
 - ER-005 — Runtime Integration: Truthful Actor Execution-State Tracking — Engineering Report (engineering-reports/ER-005-Truthful-Execution-State-Tracking.md)
+- EWO-009 — Runtime Integration: Genuine Actor Execution, Capability-Authorized Actor-to-Actor Messaging, and Bootstrap Grants (work-orders/EWO-009-Runtime-Actor-Execution.md)
+- ER-009 — Runtime Actor Execution — Engineering Report (engineering-reports/ER-009-Runtime-Actor-Execution.md)
 
 ## 23. Change History
 
@@ -462,6 +467,7 @@ Runtime (sequences only; owns Runtime-level state and TrustedCore)
 | 0.2.0 | 2026-07-13 | Denver Jacobs | Conformance update per §20, recording EWO-004/ER-004's completion: Execution Coordinator ↔ Host Adapter integration is now implemented and integrated. Updated §5 (moved this item from the incomplete-flows list to a newly-implemented statement), §10 (execution flow now shows Host Adapter allocation/release around Execution Coordinator's construct/dispatch/complete sequence), §11 (the previously-identified boundary is now closed, by exactly the minimum interface evolution ARCH-003 itself anticipated), §18 (removed the now-completed deferred-work item), §21 (both diagrams updated to show the real Host Adapter calls and remove it from the deferred callouts), and §22 (evidentiary commit hash updated to the post-EWO-004 commit; EWO-004/ER-004 added as references). No architectural principle, ownership boundary, interaction model, Runtime sequencing rule, Trusted Core boundary, or design rationale was changed — every edit restates already-published architecture (ARCH-002 §6/§10, ADR-0016) as now-realized implementation status, per this document's own §20 conformance requirement. |
 | 0.3.0 | 2026-07-13 | Denver Jacobs | Corrective update following ARCH-002 v0.2.0's semantic clarification of `Executing`'s ownership and truthfulness (an EWO-005 planning-review finding, resolved as an ARCH clarification, not a new ADR). This document's own §12 previously attributed unreachable suspend/restore solely to "Execution Coordinator and Lifecycle Guardian not yet being integrated" — accurate as far as it went, but incomplete: even after that integration, no Runtime API call other than the one currently performing an execution can observe an instance as `Executing` in a synchronous Runtime (ARCH-002 §12 v0.2.0), so integration alone does not deliver reachability against an actively-executing instance. Rewrote §12's "Honest reachability limitation" paragraph accordingly. Split §18's single "Execution Coordinator ↔ Lifecycle Guardian integration" item into two distinct items — "Truthful execution-state tracking" (narrow, deliverable now) and "Genuine suspend/restore reachability against an actively-executing instance" (requires a real asynchronous or otherwise interruptible execution mechanism, not provided by this integration phase) — and removed the now-redundant, now-imprecise "Successful suspend/restore reachability... (currently blocked on the first item above)" bullet that conflated the two. No architectural principle, ownership boundary, Runtime sequencing rule, or Trusted Core boundary was changed by this revision; it applies ARCH-002 v0.2.0's own clarification to this document's already-established integration-status sections, per §20's standing conformance requirement. |
 | 0.4.0 | 2026-07-13 | Denver Jacobs | Conformance update per §20, recording EWO-005/ER-005's completion, independently reviewed and approved (APPROVE AS IMPLEMENTED), committed at `synapse-runtime` @ `5ccc7f9083a71adc6ee704b2322a701935765679`: Execution Coordinator ↔ Lifecycle Guardian truthful execution-state tracking — the first of the two items §18 (v0.3.0) split apart — is now implemented and integrated. Updated §5 (added a new implemented bullet describing the integration and its one disclosed, pre-existing Execution Coordinator bookkeeping limitation on internally-seeded dispatch/completion rejection; corrected the "successful suspend and restore" bullet's now-inaccurate reasoning); §10 (execution flow now shows Lifecycle Guardian prevalidation, entry, and exit steps interleaved with the existing Host Adapter/Execution Coordinator sequence; failure-path paragraph and "not yet performed" list updated to match); §12 (updated the "readiness/execution-related transitions" and "suspension" bullets, and rewrote the "Honest reachability limitation" paragraph from anticipated to confirmed); §18 (removed the now-completed "Truthful execution-state tracking" item; retained and lightly reworded the still-deferred "Genuine suspend/restore reachability" item); §21 (both diagrams updated to show the real Lifecycle Guardian calls and remove Lifecycle Guardian from the deferred callout); and §22 (evidentiary commit hash updated to the post-EWO-005 commit; EWO-005/ER-005 added as references). No architectural principle, ownership boundary, interaction model, Runtime sequencing rule, Trusted Core boundary, or design rationale was changed — every edit restates already-published architecture (ARCH-002 §6/§10/§12/§15, ADR-0016) as now-realized implementation status, per this document's own §20 conformance requirement. Genuine suspend/restore reachability against an actively-executing instance remains deferred, unaffected by this milestone; no claim to the contrary appears anywhere in this revision. Classified MINOR (STD-001 §27: "backward-compatible additions, clarifications or new sections"), consistent with the identical classification given to the directly analogous 0.1.0→0.2.0 EWO-004 conformance update above — not PATCH, since this revision adds and corrects substantive implementation-status content, not merely editorial wording. |
+| 0.5.0 | 2026-07-17 | Denver Jacobs (AI-assisted, EWO-010) | Conformance update per §20 and EWO-010 (Architecture Consistency Corrections), correcting a stale statement this document had not been revised to reflect since the underlying implementation gap it described was closed: §5 previously stated "No actor-defined message-handling logic exists anywhere in the workspace" (present, unchanged, since v0.1.0 through v0.4.0), superseded on 2026-07-15 — two days after this document's own last revision — by EWO-009/ER-009's genuine implementation of actor-defined `Actor::handle()` invocation, realizing ARCH-006. This staleness was independently identified by ACR-001 (§7, §9 GAP-005) and confirmed live in the currently tracked text by an ARB session (GOV-012-ISS-013) before being corrected here, exactly as this document's own §20 conformance requirement anticipates ("expected to be revised as integration work completes, not left to silently drift out of date"). Independently re-verified against the current `synapse-runtime` working tree (not assumed): `fn handle` implementations and actor-to-actor messaging tests are directly present at the cited commit. Updated §5 (replaced the stale bullet with a description of the now-closed gap, cross-referencing EWO-009/ER-009/ARCH-006); §10 (the "not required by the Minimal Runtime Profile" and "no claim is made" statements no longer describe actor-logic invocation as absent; real host-level execution remains correctly listed as still deferred, a genuinely separate concern); §18 (removed the now-completed "complete actor execution flow... message-handling logic being invoked during dispatch" item; the remaining items — deterministic cleanup after partial failure, a first runnable actor, an end-to-end construction-through-shutdown demonstration — were deliberately left unexamined and unchanged, since verifying their current status was outside this correction task's own precisely bounded scope, per EWO-010's governing rule); §21 (the "DEFERRED — actor-defined message handling (does not exist yet)" diagram callout replaced with an accurate description); §22 (evidentiary commit hash updated to `0e4c5c9e8d27be6bfb00fb26ef19995258ad7ed7`; ARCH-006, EWO-009, ER-009 added as references); and frontmatter (added ARCH-006 to `related_documents.architecture`; corrected the flat "STD-001 (Approved)" citation to distinguish STD-001's genuinely evidenced v0.1.0/v0.2.0 approval from its current, unapproved v0.4.0 content, per the same correction EWO-010 applied elsewhere in this corpus). No architectural principle, ownership boundary, interaction model, Runtime sequencing rule, Trusted Core boundary, or design rationale was changed — every edit restates already-published architecture (ARCH-002 §6/§7, ARCH-006, ADR-0016) as now-realized implementation status, per this document's own §20 conformance requirement. Classified MINOR (STD-001 §27), consistent with the identical classification given to the directly analogous 0.1.0→0.2.0 and 0.3.0→0.4.0 conformance updates above. |
 
 ## 24. Approval Status
 

@@ -3,7 +3,7 @@ document_id: ARCH-006
 title: Runtime Actor Execution Architecture
 project: SynapseOS
 specification: SynapseOS — genuine actor execution, Runtime-owned emitted-message admission, causation, and authority resolution, and the bootstrap-grant mechanism, realizing the architecture the Runtime Actor Execution Architecture Review independently reconstructed from already-completed, already-verified implementation
-version: 0.1.3
+version: 0.1.4
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -11,7 +11,7 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-15
-last_updated: 2026-07-15
+last_updated: 2026-07-17
 classification: Public
 related_documents:
   governance:
@@ -19,7 +19,7 @@ related_documents:
     - GOV-010 (Approved, Act 2)
     - GOV-004 (Engineering Principles)
   standards:
-    - STD-001 (Approved)
+    - STD-001 (v0.1.0 and v0.2.0 Approved via normal-governance disposition; current v0.4.0 content not separately approved — see STD-001's own Approval Status section)
   architecture:
     - ARCH-000 (Draft — whole-system introduction)
     - ARCH-001 (Draft — constitutional foundation)
@@ -408,6 +408,7 @@ Source evidence (verified directly, §8):
 | 0.1.1 | 2026-07-15 | Denver Jacobs | Corrective revision following the Independent Implementation Review of this milestone, which found (verdict: CHANGES REQUIRED) that §9.1 and §9.2 incorrectly described Scheduler as unaffected by this milestone. Direct implementation inspection showed Scheduler's own public trait was redesigned (from a single stateless `select_next(ready: &[ActorInstanceId])` method to three stateful operations, `mark_ready`/`remove`/`select_next()`) and its FIFO implementation written from scratch — confirmed by ER-006's own recorded test count for this crate immediately prior (1 test, empty placeholder struct). Corrected §9.1 (component responsibility table) and §9.2 (non-responsibilities) to accurately record this; added `services/scheduler/src/{lib,internal}.rs` to §18's source evidence list. No other section changed. Scheduler's own architectural role (ready-order policy only, ARCH-002 §6, no lifecycle or capability awareness) is unchanged by this correction — only the prior claim that this milestone left it untouched is corrected. No new architectural decision is introduced; no other claim in this document is affected. |
 | 0.1.2 | 2026-07-15 | Denver Jacobs | Applied the Governance Coverage Reconciliation's approved findings. A subsequent, fully independent re-review found the 0.1.1 correction, while accurate for Scheduler, was not sufficient: three further items genuinely new to this milestone remained entirely undisclosed (`ActorHost::create_instance_with_behavior`, `ActorHost::dequeue`, `ExecutionCoordinator::fail`), and the Governance Coverage Reconciliation task subsequently surfaced two more (`Runtime::step()`, `Runtime::run_until_idle()` — both confirmed absent from the committed predecessor state, previously undisclosed anywhere in this document). Added all five to §9.1 (component responsibility table); added `step()`/`run_until_idle()` and `dequeue`'s ordering role to §10 (Runtime Execution Model), including a new ordering-guarantee bullet; updated §18's source evidence list accordingly. Per the Reconciliation's own classification, also **trimmed** §9.1's Scheduler row and §9.2's Scheduler bullet, removing method-signature-level and internal-data-structure-level detail that the Reconciliation classified as Category B (Engineering Deliverable, EWO-009's own domain) rather than Category A (Architectural) — the same treatment EWO-006's own bounded-mailbox implementation already received, requiring no dedicated architectural document beyond ARCH-002 §13's already-sufficient authority. Scheduler's own architectural role remains exactly as 0.1.1 stated it; only the level of detail carried in this document changed. No new architectural decision is introduced; no other section changed. |
 | 0.1.3 | 2026-07-15 | Denver Jacobs | Applied the two remaining corrections identified by the Historical Provenance Audit (a dedicated audit, distinct from the prior Independent Reviews, that swept every historical-claim statement in this document and EWO-009 against direct source evidence). Corrected §14's Supervision row: a failing `Actor::handle()` is handled by Execution Coordinator's own truthful failure-cleanup mechanics, genuinely new to this milestone — not, as previously stated, "the pre-existing cleanup path." Corrected §9.1's Execution Coordinator row to disclose that dispatch's own engineering surface widened to include surfacing what genuine invocation emits, not merely gaining "a" parameter — implementation-level signature detail remains EWO-009's concern, per this document's own established Scheduler precedent. No architectural principle changed, no Trusted Core boundary changed, no engineering decision was reopened. |
+| 0.1.4 | 2026-07-17 | Denver Jacobs (AI-assisted, EWO-010) | Editorial correction only, per EWO-010 (Architecture Consistency Corrections): corrected the frontmatter citation of STD-001 from a flat "(Approved)" to distinguish its genuinely evidenced approval at versions 0.1.0 and 0.2.0 from its current, unapproved v0.4.0 content. Separately, this task independently re-verified the ADR-0015/ADR-0016/ADR-0017 "(Approved)" citations already present in this document's own frontmatter and References: each is supported by a hash-matched normal-governance evidence commit in this repository's pushed history. ADR-0015's and ADR-0016's evidence records are internally consistent with this repository's own established evidentiary pattern and were confirmed reliable; the citations for both are correct and were left unchanged. ADR-0017's own evidence record was found to contain content inconsistent with that same established pattern (see EWO-010's own Final Report for this task) — this is recorded as a separate, unresolved governance-evidence-integrity concern outside this document's and this task's own authority to adjudicate, and ADR-0017's citation was likewise left unchanged pending that adjudication, since the hash match itself is genuine and reverting the citation to "Draft" would not be more accurate than leaving it. No architectural principle, Trusted Core boundary, or engineering decision was reopened. |
 
 ## 20. Approval Status
 

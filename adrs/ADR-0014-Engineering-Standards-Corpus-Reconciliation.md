@@ -1,7 +1,7 @@
 ---
 document_id: ADR-0014
 title: Engineering Standards Corpus Reconciliation
-version: 0.1.0
+version: 0.1.1
 status: Draft
 decision_owners:
   - Denver Jacobs
@@ -10,14 +10,14 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-11
-last_updated: 2026-07-11
+last_updated: 2026-07-17
 classification: Public
 related_documents:
   governance:
     - GOV-003 (Approved, Act 2)
     - GOV-010 (Approved, Act 2)
   standards:
-    - STD-001 (Approved)
+    - STD-001 (v0.1.0 and v0.2.0 Approved via normal-governance disposition; current v0.4.0 content not separately approved — see STD-001's own Approval Status section)
     - STD-002 through STD-030 (Draft — legacy corpus this ADR governs the reconciliation of; none amended by this ADR)
   architecture:
     - ARCH-000 (Draft — historical record, unmodified)
@@ -170,6 +170,7 @@ This ADR's precedence interpretation (§5) was checked directly against GOV-003 
 | Version | Date | Author | Description |
 |---------|------|--------|-------------|
 | 0.1.0 | 2026-07-11 | Denver Jacobs | Initial Draft, establishing the governance approach for reconciling the legacy engineering standards corpus (STD-002 through STD-030) with the constitutional architecture: precedence between Governance, Architecture, Standards, and Implementation; identifier permanence; amendment-over-replacement policy; overlap, terminology-drift, obsolete-reference, and cross-reference resolution rules; retirement strategy; future Standards lifecycle; and a recommended reconciliation order. No individual Standard is amended by this ADR. No approval act has occurred. |
+| 0.1.1 | 2026-07-17 | Denver Jacobs (AI-assisted, EWO-010) | Editorial correction only, per EWO-010 (Architecture Consistency Corrections): corrected the frontmatter citation of STD-001 from a flat "(Approved)" to distinguish its genuinely evidenced approval at versions 0.1.0 and 0.2.0 (independently verified: two separate normal-governance evidence commits, each hash-matched against the content approved) from its current, operative version (0.4.0), which has never been separately approved. GOV-003 and GOV-010's own "(Approved, Act 2)" citations were independently re-verified during the same task and found accurate — no correction was needed or made to those two. No decision recorded in this ADR was reopened, and no other content changed. |
 
 ## 25. Approval Status
 

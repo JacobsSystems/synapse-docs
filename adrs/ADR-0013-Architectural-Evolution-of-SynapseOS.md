@@ -1,7 +1,7 @@
 ---
 document_id: ADR-0013
 title: Architectural Evolution of SynapseOS
-version: 0.1.0
+version: 0.1.1
 status: Draft
 decision_owners:
   - Denver Jacobs
@@ -10,14 +10,14 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-11
-last_updated: 2026-07-11
+last_updated: 2026-07-17
 classification: Public
 related_documents:
   governance:
     - GOV-003 (Approved, Act 2)
     - GOV-010 (Approved, Act 2)
   standards:
-    - STD-001 (Approved)
+    - STD-001 (v0.1.0 and v0.2.0 Approved via normal-governance disposition; current v0.4.0 content not separately approved — see STD-001's own Approval Status section)
   architecture:
     - ARCH-000 (Draft — historical record, unmodified)
   rfcs:
@@ -168,6 +168,7 @@ Internal consistency of this ADR's historical account was checked against `ARCH-
 | Version | Date | Author | Description |
 |---------|------|--------|-------------|
 | 0.1.0 | 2026-07-11 | Denver Jacobs | Initial Draft, recording the three historical architectural phases of SynapseOS and establishing the Intelligence Operating System identity as the sole authoritative architectural scope going forward. Resolves the inconsistency discovered during ARCH-001 Phase 1 preparation between the operating-system-principled framing of the current governance corpus and the application-platform framing of the earlier RFC/ADR corpus. This Draft's own reasoning was itself refined once prior to first publication: an initial candidate resolution treated the operating-system framing as literal hardware-level system software; further review determined SynapseOS applies operating-system architectural principles to intelligent computation while operating above conventional operating systems, and does not directly manage hardware. No approval act has occurred; `.ai/ARCHITECTURAL-CONTEXT.md` has not yet been reconciled with this identity (see §13, Risks). |
+| 0.1.1 | 2026-07-17 | Denver Jacobs (AI-assisted, EWO-010) | Editorial correction only, per EWO-010 (Architecture Consistency Corrections): corrected the frontmatter citation of STD-001 from a flat "(Approved)" to distinguish its genuinely evidenced approval at versions 0.1.0 and 0.2.0 (independently verified: two separate normal-governance evidence commits, each hash-matched against the content approved) from its current, operative version (0.4.0, which registers the RSS/ACR/AFR document families this corpus now uses), which has never been separately approved. GOV-003 and GOV-010's own "(Approved, Act 2)" citations were independently re-verified during the same task and found accurate — no correction was needed or made to those two. No decision recorded in this ADR was reopened, and no other content changed. |
 
 ## 17. Approval Status
 
