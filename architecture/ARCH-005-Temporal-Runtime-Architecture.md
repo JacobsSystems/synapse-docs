@@ -3,7 +3,7 @@ document_id: ARCH-005
 title: Temporal Runtime Architecture
 project: SynapseOS
 specification: SynapseOS — timer ownership, delayed execution, time observation, and timer lifecycle within the local Runtime process, realizing the temporal architecture the completed "Temporal Runtime, Timers, Delayed Execution, and Time Ownership" review recommended
-version: 0.1.0
+version: 0.2.0
 status: Draft
 author: Denver Jacobs
 owner: Denver Jacobs
@@ -11,7 +11,7 @@ reviewers:
   - TBD
 approval_authority: Chief Architect (Class B, per GOV-010 §5), vacant — see GOV-003 §3.2; Founder (interim, until appointment)
 created: 2026-07-14
-last_updated: 2026-07-14
+last_updated: 2026-07-27
 classification: Public
 related_documents:
   governance:
@@ -58,7 +58,7 @@ ai_assistance: Drafting
 |---|---|
 | Document ID | ARCH-005 |
 | Title | Temporal Runtime Architecture |
-| Version | 0.1.0 |
+| Version | 0.2.0 |
 | Status | **Draft** |
 | Author | Denver Jacobs |
 | Approval authority | Chief Architect (Class B, per GOV-010 §5), vacant; Founder (interim) |
@@ -427,7 +427,8 @@ Consistent with §4, this document explicitly excludes, and no section above sho
 - Temporal Runtime MUST remain outside the Trusted Core (§9.1) — no clock, timer, or time-observation mechanism is added to the Trusted Runtime Core mechanism table (`ARCH-002 §5`).
 - Timer registrations MUST belong to `ActorId`, never to `ActorInstanceId` (§11).
 - Restart MUST preserve timer registrations, as a free consequence of `ActorId`-keying — no restart-specific timer action exists or is required (§11).
-- Stop / Terminated MUST cause Runtime to remove the corresponding timer registrations proactively (§12) — this is a normative decision, not left to implementation discretion, precisely because leaving it undecided would allow an indefinitely growing set of registrations whose eventual firing can only ever fail, which this document resolves now rather than deferring.
+- Stop / Terminated — and, more generally, any Runtime-coordinated act that definitively ends the logical actor identified by an `ActorId`, including durable deletion of that `ActorId`'s own persisted state where such a capability exists (ARCH-007 §17) — MUST cause Runtime to remove the corresponding timer registrations proactively (§12). This requirement is stated in terms of the logical actor reaching a definitive end, not in terms of any single current implementation function, and applies to every Runtime-coordinated path producing that outcome, present or future — not only to Supervisor-mediated Stop. It does not apply to checkpointing, ordinary in-process `ActorInstanceId` replacement (restart), or durable-state restoration, none of which ends the logical actor: existing `ActorId`-keyed timer registrations MUST continue to survive each of these unchanged (§11), unless a separately authorized future architecture states otherwise. This is a normative decision, not left to implementation discretion, precisely because leaving it undecided would allow an indefinitely growing set of registrations whose eventual firing can only ever fail, which this document resolves now rather than deferring.
+- Timer cleanup triggered by a definitive logical-actor-ending act remains ordinary Runtime orchestration (ADR-0016 Rule 1): Runtime alone initiates it, and Temporal Runtime alone performs the cancellation itself, using its own existing `ActorId`-keyed registration model — neither Persistence Service nor Actor Host ever calls Temporal Runtime directly, on the same basis §10.2 already forbids any other component from doing so. Where the definitive act is itself a coordinated, multi-step operation (for example, durable deletion, ARCH-007 §17), timer cleanup MUST occur, and its own audit events MUST be truthfully recorded, before that operation's own completion or failure is reported — never after, and never claimed without having genuinely occurred.
 - Temporal Runtime MUST NOT execute actors, dispatch, enqueue mailboxes, or otherwise bypass the single admission pipeline under any circumstance (§13).
 - Every timer-generated message MUST be submitted through the existing, unmodified admission pipeline and MUST be architecturally indistinguishable, from that point forward, from any other message (§13, §14).
 - Temporal Runtime MUST NOT directly manipulate Scheduler, Lifecycle Guardian, Actor Host, Execution Coordinator, Capability Authority, or Message Gateway (§10.2).
@@ -482,6 +483,7 @@ Source evidence (verified directly, §7):
 | Version | Date | Author | Description |
 |---------|------|--------|-------------|
 | 0.1.0 | 2026-07-14 | Denver Jacobs | Initial Draft. Establishes the Temporal Runtime Architecture: Temporal Runtime component placement, responsibility boundaries, timer identity model, timer lifecycle, delayed-execution and admission-interaction requirements, capability interaction, mailbox interaction, causation, supervision interaction, failure semantics, clock architecture, audit architecture, and future-compatibility constraints. Resolves the open question ARCH-004 §4/§21 named and declined to resolve ("timers or scheduled/delayed restart") by establishing the general temporal mechanism a future restart-backoff policy could be built upon, without defining that policy. |
+| 0.2.0 | 2026-07-27 | Denver Jacobs (AI-assisted) | Targeted correction extending the existing Stop/Terminated proactive timer-cancellation requirement (§23) to every Runtime-coordinated act that definitively ends a logical actor's `ActorId` — not only Supervisor-mediated Stop — explicitly naming durable deletion of a Persistent Actor's persisted state (ARCH-007 §17, which did not exist when this document was first authored) as one such act. Added one clarifying bullet confirming this extension does not apply to checkpointing, ordinary in-process restart, or restoration, none of which end the logical actor; existing `ActorId`-keyed timer registrations continue to survive each of these unchanged. Added one further bullet confirming timer cleanup remains ordinary Runtime orchestration — Runtime alone initiates it, Temporal Runtime alone performs it, neither Persistence Service nor Actor Host ever calls Temporal Runtime directly — and that, for a coordinated multi-step act such as durable deletion, cleanup and its audit must complete before that act's own outcome is reported. No architectural decision was reopened: Temporal Runtime's component placement, lifecycle, identity model, non-authoritative status, and complete isolation from Persistence Service are all unchanged. No durable timers, timer persistence, or automatic timer re-arming is introduced or authorized by this correction. |
 
 ## 27. Approval Status
 
