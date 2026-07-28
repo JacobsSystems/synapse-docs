@@ -1,8 +1,8 @@
 ---
 document_id: EWO-016
 title: "ConstraintSet-Based Retry Policy"
-version: 0.1.2
-status: Approved
+version: 0.1.3
+status: Implemented
 author: Denver Jacobs
 owner: Denver Jacobs
 reviewers: TBD
@@ -35,8 +35,8 @@ Registered per STD-001 §46 (Engineering Work Orders). This authorizes implement
 |---|---|
 | Document ID | EWO-016 |
 | Title | ConstraintSet-Based Retry Policy |
-| Version | 0.1.2 |
-| Status | **Approved** |
+| Version | 0.1.3 |
+| Status | **Implemented** (STD-001 §12 — implementation verified; Founder-accepted; closed) |
 | Author | Denver Jacobs |
 | Created | 2026-07-28 |
 | Architecture authority | ARCH-008 v0.4.3 (Approved) §14, §19.4, §23.5; ARCH-002 §9; ARCH-001 (non-amplification rule) |
@@ -426,15 +426,23 @@ An Engineering Report SHALL be authored recording: objective; implementation sum
 
 ## 21. Disposition
 
-**Approved.**
+**Implemented. Accepted. Closed.**
 
-Independently reviewed (IER-016): 0 CRITICAL, 0 unresolved MAJOR (one MAJOR finding, IER-016-F03, corrected within the same review pass), two MINOR findings corrected (IER-016-F01, IER-016-F02), one non-blocking OBSERVATION recorded (IER-016-OBS-01).
+Independently reviewed pre-implementation (IER-016): 0 CRITICAL, 0 unresolved MAJOR (one MAJOR finding, IER-016-F03, corrected within the same review pass), two MINOR findings corrected (IER-016-F01, IER-016-F02), one non-blocking OBSERVATION recorded (IER-016-OBS-01).
 
 Founder-approved, v0.1.2, 2026-07-28.
 
 Published.
 
-Authorised for implementation through a separate, subsequently governed Runtime implementation task. Implementation has not begun; no Runtime file has been modified by this EWO or by its review or approval.
+Implemented at Runtime commit `29ea55ced6348490f90bd7baeb08d3d4705f19ab` (`runtime: enforce capability-declared retry constraints (EWO-016)`).
+
+Independently reviewed post-implementation (IIR-016): 0 CRITICAL, 0 MAJOR, 1 MINOR (a focused-test-count reporting error in the implementation report, corrected; no bearing on implementation correctness), 0 OBSERVATION. Concluded `IIR-016 COMPLETE — READY FOR ENGINEERING REPORT (ER-017)`.
+
+Recorded in `engineering-reports/ER-017-ConstraintSet-Based-Retry-Policy.md`.
+
+Founder-accepted, v0.1.3, 2026-07-28. No unresolved CRITICAL or MAJOR finding, at either review stage, remains outstanding.
+
+**EWO-016 is closed.** No further implementation, correction, or review is authorised under this EWO; any future work on retry constraints, `ConstraintSet`, or its deferred dimensions (§18) requires its own, separately authorized Engineering Work Order.
 
 ## Revision History
 
@@ -443,6 +451,7 @@ Authorised for implementation through a separate, subsequently governed Runtime 
 | 0.1.0 | 2026-07-28 | Denver Jacobs (AI-assisted) | Initial Draft. Authored from ARCH-008 v0.4.3 §14/§19.4/§23.5, ARCH-001's non-amplification rule, ARCH-002 §9, the closed EWO-015/ER-016 milestone, and direct inspection of the current, entirely inert `ConstraintSet`/`issue`/`attenuate` implementation (confirmed: the existing `RuntimeError::ExceedsIssuingCeiling` variant already used for `operations`-ceiling violations is directly reusable, unmodified, for retry-constraint widening violations too). Specifies a nested `RetryConstraint` dimension on `ConstraintSet` (`max_total_attempts: Option<u32>`, counting the initial attempt); real narrowing enforcement at both `issue` and `attenuate`; Runtime-side resolution from the already-retained capability in `retry_dispatch_material`, replacing exactly the one hardcoded `None` line in `maybe_schedule_retry`; and an unmodified `decide_retry` signature. Informed by, but not itself constituting, the completed "ConstraintSet-Based Retry Policy Architecture Review" (`READY FOR EWO`), whose conclusions are treated as authoritative only insofar as independently re-derivable from the repository evidence this document itself cites. |
 | 0.1.1 | 2026-07-28 | Denver Jacobs (AI-assisted) | Corrected per Independent Engineering Review IER-016 (findings below). §9/§12: corrected the false "31+ call sites... continue to compile... without modification" compatibility claim and the incomplete 4-file authorized-scope list — direct `grep` evidence (zero `ConstraintSet::default()` uses anywhere; 131 bare-literal `ConstraintSet` construction occurrences across 13 files) proves every one of those 13 files requires a mechanical `ConstraintSet` → `ConstraintSet::default()` migration once the field is added; §12 now authorizes those 9 additional files for mechanical-only change. §6/§7: changed `RetryConstraint.max_total_attempts` from `Option<u32>` to non-optional `std::num::NonZeroU32`, eliminating the redundant double-"no constraint" representation (`ConstraintSet.retry: None` vs. `Some(0)`) and the resulting `0`/`1`-equivalence complexity, with zero impact on `decide_retry`'s existing `Option<u32>` signature (resolved via `.map(NonZeroU32::get)`); updated worked examples, test coverage (§13), and error-handling language (§14) to match. §7: added an explicit clarification that `attenuate`'s `narrower: ConstraintSet` parameter represents the child's complete resulting constraint set, not a delta merged against the parent — resolving a latent ambiguity in the narrowing table's own last row. §19: updated the corresponding risk-table row to reflect the corrected file count and scope split. Status remains Draft; not Founder-approved; not published; not authorized for implementation. |
 | 0.1.2 | 2026-07-28 | Denver Jacobs (Founder) | Governance disposition recorded — **no engineering-scope, requirement, or exclusion changed from 0.1.1**. Records the Founder's decision on the completed Independent Engineering Review IER-016 (concluding `EWO-016 INDEPENDENT ENGINEERING REVIEW COMPLETE — READY FOR FOUNDER APPROVAL`, one MAJOR finding corrected within the review pass — IER-016-F03 — two MINOR findings corrected — IER-016-F01, IER-016-F02 — one non-blocking OBSERVATION recorded, no CRITICAL or unresolved MAJOR finding): `status` transitions from `Draft` to **`Approved`**; §19's stale `0`/`1`-equivalence risk-mitigation language (superseded by 0.1.1's own `NonZeroU32` correction but not yet cleaned up at that time) is corrected for internal coherence; §21's Disposition section is rewritten to reflect the true, current reviewed-and-approved state, replacing the placeholder "not yet independently reviewed" language 0.1.0 originally carried; the Approval Status table is completed (Approval Authority recorded against Denver Jacobs, Founder, exercising Class E implementation-decision authority under GOV-010 §4–§5, in the absence of an identified delegate, on the identical basis EWO-014's and EWO-015's own approval dispositions already established). This EWO reserves its own dedicated version for this pure governance disposition, mirroring EWO-014's and EWO-015's own precedent (each used a final version exclusively for the Founder's disposition, with no engineering-scope change) — the only difference being that EWO-016's engineering corrections were recorded at 0.1.1, a version earlier than the corresponding corrections were recorded at in EWO-014/015 (which folded their own review-correction narratives into 0.1.0 directly), so the equivalent "pure disposition" version here is 0.1.2 rather than 0.1.1. |
+| 0.1.3 | 2026-07-28 | Denver Jacobs (Founder) | Founder Acceptance recorded — **no engineering-scope, requirement, or exclusion changed from 0.1.2**. Records the Founder's acceptance of the completed Runtime implementation (commit `29ea55ced6348490f90bd7baeb08d3d4705f19ab`, `runtime: enforce capability-declared retry constraints (EWO-016)`), following an Independent Implementation Review (IIR-016: 0 CRITICAL, 0 MAJOR, 1 MINOR — a focused `synapse-common` test-count reporting error, independently corrected, with no bearing on the Runtime implementation's own correctness — 0 OBSERVATION; concluding `IIR-016 COMPLETE — READY FOR ENGINEERING REPORT (ER-017)`) and publication of the permanent Engineering Report (`engineering-reports/ER-017-ConstraintSet-Based-Retry-Policy.md`, commit `9ea9fa63481f9b69bd4be56cb019254043937a6a`): `status` transitions from `Approved` to **`Implemented`** (STD-001 §12 — "optional status for specifications whose implementation is verified"), the first use of this status value in this repository, applied rather than an invented equivalent (e.g. "Accepted"/"Closed") since STD-001 already defines it precisely for this purpose. §21's Disposition section is rewritten to record implementation, post-implementation review, Engineering Report publication, Founder Acceptance, and closure. The Approval Status table gains two rows (Independent Implementation Review; Founder Acceptance), completing the full pre- and post-implementation review/approval lineage this EWO's own lifecycle required. **EWO-016 is closed** by this disposition; no further work is authorised under it. |
 
 ## Approval Status
 
@@ -451,3 +460,5 @@ Authorised for implementation through a separate, subsequently governed Runtime 
 | Author | Denver Jacobs (AI-assisted) | Drafted | 2026-07-28 |
 | Independent Engineering Review | Denver Jacobs (Founder; disclosed self-review — Chief Architect role vacant, no independent third-party reviewer available) | `EWO-016 INDEPENDENT ENGINEERING REVIEW COMPLETE — READY FOR FOUNDER APPROVAL` (one MAJOR finding — IER-016-F03 — and two MINOR findings — IER-016-F01, IER-016-F02 — corrected within the same review pass; one non-blocking OBSERVATION recorded; 0 CRITICAL, 0 unresolved MAJOR remaining) | 2026-07-28 |
 | Approval Authority | Denver Jacobs, Founder, exercising Class E (Implementation) decision authority under GOV-010 §4–§5 in the absence of an identified delegate | **Approved** | 2026-07-28 |
+| Independent Implementation Review | Denver Jacobs (Founder; disclosed self-review — Chief Architect role vacant, no independent third-party reviewer available) | `IIR-016 COMPLETE — READY FOR ENGINEERING REPORT (ER-017)` (0 CRITICAL, 0 MAJOR, 1 MINOR — reporting-accuracy correction only, no bearing on implementation correctness — 0 OBSERVATION) | 2026-07-28 |
+| Founder Acceptance | Denver Jacobs, Founder, exercising Class E (Implementation) decision authority under GOV-010 §4–§5 in the absence of an identified delegate | **Accepted — EWO-016 Closed** | 2026-07-28 |
