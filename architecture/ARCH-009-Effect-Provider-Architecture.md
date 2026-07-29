@@ -4,7 +4,7 @@ title: Effect Provider Architecture
 project: SynapseOS
 specification: SynapseOS — the architecture governing every present and future Effect Provider (ARCH-008 §11), covering exactly the ground ARCH-008 itself reserves or leaves as a future extension point — provider registration/discovery, provider classification, and provider extension rules — without restating what ARCH-008 §§9–31 already, generically define
 version: 0.1.0
-status: Draft
+status: Superseded
 author: Denver Jacobs (AI-assisted)
 owner: Denver Jacobs
 reviewers:
@@ -28,7 +28,7 @@ related_documents:
   engineering:
     - EWO-017 (Reference Effect Provider Framework, implemented, commit `397dded`) — the sole demonstrated evidence this document generalizes from; every claim below is checked directly against this implementation, never assumed
 supersedes: None
-superseded_by: None
+superseded_by: ARCH-008 (v0.5.0) — see ARCH-008 §11.1–§11.4, §13.1–§13.2, §17.1, §18.1, invariants 46–51, and §38.4
 ai_assistance: Drafting
 ---
 
@@ -36,7 +36,9 @@ ai_assistance: Drafting
 
 *Filename pattern: `ARCH-009-Effect-Provider-Architecture.md` (per STD-001 §7–§8).*
 
-> **Status notice.** This document is **Draft**. No Architecture Review (GOV-013 §6.9) has occurred. It is submitted as architecture documentation for review, not as an approved specification.
+> **Superseded notice (2026-07-29).** Independent Architecture Review AR-009 found this document's own content sound (zero Critical, zero Major findings) but recommended, per its own §3 disclosure below and AR-009's own "Option B" conclusion, that it be integrated into ARCH-008 rather than retained as a standalone document. The Founder accepted this recommendation. This document's genuinely new content (§§15–17) now lives in **ARCH-008 §11.1–§11.4, §13.1–§13.2, §17.1, and §18.1** (v0.5.0), with both Minor findings AR-009 identified corrected in that integration. This file is retained, unmodified in substance below, as the truthful historical record of how that content was originally authored and reviewed (STD-001 §4/§28) — it is no longer authoritative. Consult ARCH-008 directly for the current, governing architecture.
+
+> **Status notice (original, preserved below for historical accuracy).** This document is **Draft**. No Architecture Review (GOV-013 §6.9) has occurred. It is submitted as architecture documentation for review, not as an approved specification.
 
 > **Load-bearing disclosure, stated before anything else in this document.** ARCH-008 (Effect Runtime Architecture, v0.4.3, Approved) already defines, generically and provider-agnostically, almost everything this document was asked to define: Provider Actor Model (§11), Provider Isolation (§12), Effect Request and Result Flow (§13), Capability Architecture (§14), Effect Identity (§15), Effect Lifecycle (§16), Audit Architecture (§17), Failure Semantics (§18), Retry Architecture (§19), Timeout Architecture (§20), Cancellation Architecture (§21), Security Boundaries (§27), and Future Compatibility (§29) — the last of which already names filesystem, database, AI, email, message-broker, cloud, hardware, and plugin providers by name as already-compatible future extensions, requiring no redesign. **This document does not restate any of it.** Doing so would recreate, at a far larger scope, the exact "duplicate lifecycle definition / dual source of truth" defect this project's own Independent Engineering Review of STD-031 (IER-STD-031, F01) already identified and corrected once. See §3 for the complete accounting of what ARCH-008 already governs versus what this document actually adds.
 
