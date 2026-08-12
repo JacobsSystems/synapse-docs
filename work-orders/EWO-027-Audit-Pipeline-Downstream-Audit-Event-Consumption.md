@@ -1,8 +1,8 @@
 ---
 document_id: EWO-027
 title: "Audit Pipeline: Downstream Audit Event Consumption"
-version: 0.2.1
-status: Approved
+version: 0.3.0
+status: Implemented
 author: Denver Jacobs
 owner: Denver Jacobs
 reviewers:
@@ -255,6 +255,7 @@ None remaining for architecture. Implementation-stage authorization remains a se
 | 0.1.0 | 2026-08-12 | Denver Jacobs (AI-assisted recovery) | Initial Draft, recovered from repository evidence. |
 | 0.2.0 | 2026-08-12 | Denver Jacobs (AI-assisted correction) | Targeted correction applying the five findings and four observations of the Independent Architecture Review of v0.1.0. New §14 (Bounded Audit Buffer / Overflow Policy). §13 rewritten. ARCH-001/EWO-025 citations corrected. §9 panic-safety distinction added. |
 | 0.2.1 | 2026-08-12 | Denver Jacobs (AI-assisted correction) | Narrow, PATCH-scale correction applying exactly `NRR-027-F01`, the sole finding of the Independent Architecture Re-Review of v0.2.0. §28's `GOV-013` citation corrected to disclose "(Draft, v0.1.0, unapproved)." §39 Correction Matrix corrected to truthfully attribute `IAR-027-O01`'s closure to this version. No architectural decision altered. **Founder Architecture Approval granted at this version** (§40) — filed as-is, no version bump on approval, per `STD-001` §13 and direct `EWO-029.4`/`EWO-029.5` precedent. |
+| 0.3.0 | 2026-08-12 | Denver Jacobs (Founder) | Governance disposition recorded — no architectural decision, obligation, or scope changed from 0.2.1. Records Final Founder Implementation Acceptance (§41) for the complete implementation, chat-delivered-and-reviewed across four working-management stages (informally labeled "Units 1–4" for session convenience only — a label this architecture itself never defines) plus one Narrow Implementation Correction, through `synapse-runtime` commit `9fa5cbb459a6aec921b4b32fc71b8105964087e2`. `status` transitions from `Approved` to **`Implemented`**, per `STD-001` §12/§46. MINOR-scale per `STD-001` §13 (a clarifying addition, not a change to obligations or architecture intent), directly following `EWO-025` §12/Revision-History precedent (0.2.0 → 0.3.0 to record a Founder implementation disposition). This version records Repository Filing of the Founder's decision only — it does not itself alter §1–§37 above. |
 
 ## 38. Approval Status
 
@@ -262,9 +263,9 @@ None remaining for architecture. Implementation-stage authorization remains a se
 
 | Field | Value |
 |---|---|
-| Lifecycle status | Approved |
-| Normal-governance disposition | Approved — Architecture, with non-blocking observations |
-| Disposition date | 2026-08-12 |
+| Lifecycle status | Implemented |
+| Normal-governance disposition | Approved — Architecture, with non-blocking observations; Implemented — complete implementation Founder-accepted (§41) |
+| Disposition date | 2026-08-12 (architecture); 2026-08-12 (implementation) |
 | Approving actor | Denver Jacobs (Founder) |
 
 ## 39. Correction Matrix
@@ -302,7 +303,9 @@ This approval covers the architecture defined in §1–§37 above in full, inclu
 
 ## 41. Implementation Authorization Status
 
-**NOT GRANTED.** Founder Architecture Approval (§40) authorizes the architecture only. It does not authorize:
+### 41.1 At Filing (v0.2.1, 2026-08-12) — Historical
+
+**NOT GRANTED.** Founder Architecture Approval (§40) authorized the architecture only. It did not authorize:
 
 - modifying `synapse-runtime` implementation code;
 - modifying `AuditEmitter`, `AuditPipeline`, or `FileAuditPipeline`;
@@ -312,8 +315,38 @@ This approval covers the architecture defined in §1–§37 above in full, inclu
 - beginning Independent Implementation Review;
 - any other implementation-stage activity.
 
-The preserved candidate implementation predates this document's own corrections (§30) and remains untouched, uncommitted, and unauthorized for commit. Implementation authorization is a separate, future Founder decision — **EWO-027 — Implementation Lifecycle Initiation / Authorization** — not granted by this Filing.
+The preserved candidate implementation predated this document's own corrections (§30) and remained untouched, uncommitted, and unauthorized for commit. Implementation authorization was recorded as a separate, future Founder decision — **EWO-027 — Implementation Lifecycle Initiation / Authorization** — not granted by the v0.2.1 Filing.
+
+### 41.2 Final Founder Implementation Acceptance (v0.3.0, 2026-08-12) — GRANTED
+
+Implementation authorization was subsequently granted (session-level, not itself separately filed) and the implementation was carried out in an isolated `synapse-runtime` worktree off fresh `origin/main` — never against the preserved candidate implementation named in §41.1, which remains untouched, uncommitted, and still unauthorized for commit. The complete implementation proceeded through four working-management stages, informally labeled "Unit 1" (`AuditEmitter` bounded buffer), "Unit 2" (`AuditPipeline`/`FileAuditPipeline`), "Unit 3" (Runtime integration), and "Unit 4" (remaining §26 acceptance-test closure) purely for session/engineering-management convenience — **this architecture does not define, and has never defined, "Units"; that label carries no architectural authority** — plus one Narrow Implementation Correction (§26 item 12), each independently reviewed, and each individually Founder-accepted before the next began:
+
+| Commit | Description |
+|---|---|
+| `3472eb7792b863eb05009376fc8c314f94b6ce83` | `AuditEmitter` bounded buffer, DROP-OLDEST, `dropped_due_to_capacity` (Founder-accepted) |
+| `383f8841d50fc994015b208484397109e9ba7ff0` | `AuditPipeline`/`FileAuditPipeline` service (Founder-accepted) |
+| `47da4ecfb619ffa0bf242c4a9146bc543bc0dd7a` | Runtime integration (`with_audit_pipeline`, `flush_audit_events`) (Founder-accepted) |
+| `2f2eda85bee72c86372f6f34487a4e63ccc66bd0` | §26 acceptance-test closure, items 11–13 |
+| `9fa5cbb459a6aec921b4b32fc71b8105964087e2` | §26 item 12 Narrow Implementation Correction — final commit |
+
+**§26 Acceptance Status: 14 of 14 items satisfied**, independently re-derived across the complete current test suite (not assumed from the individual stage acceptances above), confirmed by the Independent Implementation Re-Review of `9fa5cbb459a6aec921b4b32fc71b8105964087e2`: PASS, zero open Critical/Major/Minor finding, zero unresolved observation.
+
+**Final Founder Implementation Acceptance — GRANTED.** Denver Jacobs, Founder, 2026-08-12, recorded verbatim:
+
+> "ACCEPT — Grant Final Founder Implementation Acceptance for EWO-027 v0.2.1 implementation."
+
+This acceptance covers the complete implementation through `9fa5cbb459a6aec921b4b32fc71b8105964087e2`. No additional EWO-027 implementation unit is pending or authorized. The architecture (§1–§37) remains Approved and unaltered by this acceptance.
+
+**EWO-027 is CLOSED / COMPLETE.**
 
 ## 42. Exact Next Lifecycle Stage
 
-**EWO-027 — Implementation Lifecycle Initiation / Authorization** (a separate, future Founder decision — not automatic, not begun by this Filing).
+**EWO-027 itself has no further lifecycle stage — it is closed (§41.2).** This EWO is unrelated to, and does not gate or unblock, any other work order.
+
+The next mandatory SynapseOS lifecycle stage, independent of EWO-027, per current repository evidence (`ARCH-017`, `EWO-029.5`, `EWO-029.5` §36/§37):
+
+1. **`EWO-029.5` implementation completion** — the `synapse-observation-wire` crate (`synapse-runtime` commits `8bd0aab`, `0cb1a24`, `4d8d32d`) is committed but not yet integrated into `runtime`/`sdk`, and has no recorded Founder Implementation Acceptance or Engineering Report.
+2. **`EWO-029.6`** — formal cross-platform (Windows/Unix/macOS) conformance testing, named but not yet started (`EWO-029.5` §33).
+3. Only once `ARCH-017`'s own implementation (items 1–2) is complete does **`EWO-028`** (Draft, unfiled — Phase 1 Read-Only Control Centre GUI Engineering Work Order) unblock (`EWO-029.5` §36; `ARCH-017` frontmatter), and proceed through its own remaining lifecycle (Correction of `IER-028-F01`/`F02` → Re-Review → Founder Approval → Implementation).
+
+`ARCH-015` (Developer Platform Boundary), `ARCH-016` (Control Centre Foundation, Phase 1 read-only), and `ACT-005` (Developer Platform Era) are all already Approved and are not blockers. GUI technology selection and Control Centre repository creation remain open but are not separately-gated prerequisite work — they fall within `EWO-028`'s own lifecycle.
