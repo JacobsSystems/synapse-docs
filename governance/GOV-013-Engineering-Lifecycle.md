@@ -1,7 +1,7 @@
 ---
 document_id: GOV-013
 title: Engineering Lifecycle
-version: 0.1.0
+version: 0.2.0
 status: Draft
 author: Denver Jacobs (AI-assisted)
 owner: Denver Jacobs
@@ -9,7 +9,7 @@ reviewers:
   - TBD
 approval_authority: Founder (Denver Jacobs), per GOV-003 §3.1/§5 — a Governance-tier document, approved at the Governance tier on the same basis as GOV-002, GOV-003, GOV-004, and GOV-010.
 created: 2026-07-26
-last_updated: 2026-07-26
+last_updated: 2026-08-13
 classification: Public
 related_documents:
   governance:
@@ -22,6 +22,7 @@ related_documents:
     - GOV-012 (v0.1.1, Draft — Architecture Review Board Session 001; evidence of the Architecture Review stage in practice)
   standards:
     - STD-001 (v0.1.0 and v0.2.0 Approved via normal-governance disposition; current v0.4.0 content not separately approved — the sole authority for document families, identifiers, and evidence representation this document defers to throughout)
+    - STD-031 (v0.2.1 Approved; v0.3.0 amendment candidate — applies this document's Founder-stage AI-assisted independent technical review model to Independent Engineering Review and Independent Implementation Review without redefining either stage)
   architecture:
     - ARCH-001 (Draft — cited as an example Architecture Authoring output)
     - ARCH-004 (Draft — cited as an example Architecture Authoring output and Architecture Review subject)
@@ -51,7 +52,9 @@ ai_assistance: Drafting
 
 # GOV-013 — Engineering Lifecycle
 
-> **Status notice.** This document is **Draft**. No GOV-013-specific approval act has occurred. Drafting, saving, staging, committing, or pushing this document does not itself constitute its approval. See §14 (Approval Status).
+> **Status notice.** This v0.2.0 amendment is **Draft** and has not been reviewed or approved. GOV-013 v0.1.0 remains separately Approved through its exact-artifact Normal-Governance Approval Evidence Record, commit `3ac7cfb2e953004e891586e5ffef31e5d4fc87a6`; that disposition does not approve this changed artifact. Drafting, saving, staging, committing, or pushing v0.2.0 does not itself constitute review, approval, acceptance, implementation authorization, release authorization, or deployment authorization. See §16 (Approval Status).
+
+> **Revision notice.** v0.2.0 is a MINOR, backward-compatible governance clarification. It defines a bounded Founder-stage AI-assisted independent technical review model for the period in which no qualified non-author human reviewer is available, while preserving GOV-003's and GOV-010's human-authority boundary and the existing lifecycle, severity vocabulary, evidence requirements, and Approval Authority. "Independent technical" describes adversarial evidence re-derivation; it never means or implies independent human review.
 
 > **AI Assistance:** `Drafting` — AI-assisted content in this document remains subject to human ownership, review, validation, and approval under STD-001 §33 (AI-Assisted Documentation) and GOV-010 §15. AI output is not automatically authoritative.
 
@@ -65,9 +68,9 @@ This document governs **how engineering work progresses**. It does not define an
 
 ## 2. Scope
 
-**In scope:** the mandatory lifecycle stages from Idea through Publication; the single question each stage answers; each stage's permitted activities, prohibited activities, required outputs, entry criteria, and exit criteria; the discipline governing independent review, findings classification, correction, and re-review; the engineering principles this lifecycle exists to enforce; the relationships between Governance, Research, Design, Architecture, Engineering Work Orders, Implementation, Reviews, and Engineering Reports; and change control — when correction suffices, when a narrow re-review suffices, and when a stage must be reopened.
+**In scope:** the mandatory lifecycle stages from Idea through Publication; the single question each stage answers; each stage's permitted activities, prohibited activities, required outputs, entry criteria, and exit criteria; the discipline governing independent review, findings classification, correction, and re-review; the bounded Founder-stage AI-assisted independent technical review model in §8.7–§8.10; the engineering principles this lifecycle exists to enforce; the relationships between Governance, Research, Design, Architecture, Engineering Work Orders, Implementation, Reviews, and Engineering Reports; and change control — when correction suffices, when a narrow re-review suffices, and when a stage must be reopened.
 
-**Out of scope:** any specific technical capability, architecture, or implementation; the definition or amendment of controlled-document families, identifiers, metadata, or file conventions (STD-001's exclusive domain); the governance roles and decision-authority framework themselves (GOV-003 and GOV-010's domain, which this document cites and does not restate); capability-specific engineering rules of any kind. Where this document names a document family (RES, ARCH, EWO, ER, RSS, ACR, AFR), it does so only to describe how that already-registered family is used within the lifecycle — it registers no new family and amends no existing one.
+**Out of scope:** any specific technical capability, architecture, or implementation; the definition or amendment of controlled-document families, identifiers, metadata, or file conventions (STD-001's exclusive domain); the governance roles and decision-authority framework themselves (GOV-003 and GOV-010's domain, which this document cites and does not restate); capability-specific engineering rules of any kind; and any authorization to implement, release, deploy, accept risk, or bind an external party. Where this document names a document family (RES, ARCH, EWO, ER, RSS, ACR, AFR), it does so only to describe how that already-registered family is used within the lifecycle — it registers no new family and amends no existing one.
 
 ## 3. Relationship to GOV-001, GOV-002, GOV-003, GOV-004, and GOV-010
 
@@ -404,6 +407,8 @@ This document does not:
 
 Every review stage (§6.3, §6.5, §6.7, §6.9, §6.11, §6.14) is conducted independently of the work it reviews wherever an independent reviewer exists, and its independence — or the disclosed absence of one — is stated plainly (GOV-003 §3.4: "must disclose any conflict of interest, including reviewing content they also authored"; GOV-010 §15: AI-generated critique does not, by itself, satisfy an independent human review requirement). A review re-derives its findings from the artifact and the repository directly; it does not trust a prior report's own characterization of what it did (demonstrated throughout: every Architecture Review, Design Approval Review, and Independent Implementation Review in this project's history re-reads the reviewed artifact, re-runs the relevant verification commands, or re-derives the relevant hash — never accepting a predecessor's summary as sufficient).
 
+Where no qualified non-author human reviewer is available, §8.7–§8.10 permits bounded Founder-stage use of an AI Technical Review Report as technical evidence, followed by a separate personal Founder Human Review Disposition. That model does not make the AI review independent human review, does not satisfy any requirement that specifically requires a non-author human, and does not alter GOV-003's or GOV-010's allocation of human authority.
+
 ### 8.2 Evidence-based findings
 
 A finding states what was checked, what was found, and why it matters — never an unsupported assertion. Where a review finds no defect, that outcome is itself reported as the result of applying the method, not assumed as a starting expectation (ACR-001 §3's treatment of its own "zero contradictions found" result).
@@ -430,6 +435,92 @@ A narrow re-review (§6.7, §6.11) confirms only that the named findings were re
 ### 8.6 Approval criteria
 
 A review's Approved verdict requires: every finding from the preceding review (if any) resolved; no new finding introduced by the correction; every constitutional or foundational property named in that artifact's own governing precedent unchanged; and no implementation, design, or governance content out of the reviewed stage's own scope. Approval, once reached, is a review-stage verdict — it becomes an *effective, operative* decision only once GOV-010 §5's Approval Authority act occurs and is evidenced per §6.16 above; a review's own "Approved" wording never substitutes for that act.
+
+### 8.7 Founder-Stage AI-Assisted Independent Technical Review (FS-AITR)
+
+**Definition.** A **Founder-Stage AI-Assisted Independent Technical Review (FS-AITR)** is a temporary review-evidence pattern available only while no qualified non-author human reviewer is available and only for work classified R0, R1, or R2 under §8.9. "Independent technical" means the AI report skeptically re-derives claims from exact artifacts and primary evidence rather than trusting an author's or predecessor report's characterization. It does not mean independent human review and does not make the AI system a GOV-003 Reviewer. FS-AITR consists of two distinct records and acts:
+
+1. an **AI Technical Review Report**, produced by an AI system as non-authoritative technical evidence; and
+2. a subsequent **Founder Human Review Disposition**, personally performed and recorded by the Founder under §8.8.
+
+An AI Technical Review Report MAY:
+
+- inspect the exact committed artifact and its governing sources;
+- perform adversarial technical review and reproduce or independently re-derive technical claims, repository state, hashes, diffs, tests, validation results, cross-references, and other reproducible evidence;
+- apply the existing Critical / Major / Minor / Observation vocabulary (§8.3), identify uncertainty, limitations, and residual risk, and produce a technical verdict;
+- challenge prior claims, propose corrections, and re-review a corrected candidate within the authorized scope; and
+- prepare a durable report that identifies the reviewed artifact, method, evidence, findings, limitations, and recommendation.
+
+An AI Technical Review Report MUST NOT:
+
+- act as the human Reviewer defined by GOV-003 §3.4 or satisfy that role's human-review requirement;
+- claim or imply that an AI system is a human, a qualified non-author human reviewer, or an independent human reviewer;
+- describe itself as independent human review or satisfy a requirement that specifically requires a non-author human reviewer;
+- issue a Founder Human Review Disposition, Founder Approval, Founder Acceptance, implementation authorization, release or deployment authorization, risk acceptance, or any other governance disposition;
+- accept residual risk on behalf of the Founder;
+- automatically advance or claim to advance a lifecycle stage;
+- exercise, invent, delegate, or silently infer authority assigned to a human or recognized governance role;
+- conceal AI authorship, a conflict, missing evidence, uncertainty, or the absence of an independent human reviewer; or
+- classify its own use as permissible where §8.9 or §8.10 requires a non-author human reviewer; it may recommend a risk tier, but the Founder must confirm or correct that classification personally.
+
+Every AI Technical Review Report used under this model MUST contain the following sentence exactly:
+
+> This review was performed by an AI system and is not an independent human review.
+
+The report is technical evidence only. It has no governance effect until the Founder completes the distinct human act in §8.8, and even then it does not become independent human review.
+
+### 8.8 Founder Human Review Disposition
+
+A **Founder Human Review Disposition** is the Founder's personal review of an exact AI Technical Review Report and the exact artifact that report addresses. It is not produced by the AI system and MUST NOT be inferred from a prompt, an AI-authored draft, repository activity, silence, or a later approval act.
+
+To issue this disposition, the Founder MUST personally:
+
+1. consider and identify the exact artifact version and committed identity being reviewed, and the exact AI Technical Review Report relied upon;
+2. read the report and inspect enough of its cited primary evidence to make an informed human judgment rather than merely adopt its recommendation;
+3. consider every finding, disclosed limitation, material uncertainty, conflict, contrary evidence, and identified residual risk;
+4. accept, reject, or modify the AI report's findings, and separately accept or reject its technical verdict;
+5. confirm or correct the §8.9 risk tier and confirm that no §8.10 sunset condition applies;
+6. decide whether to **accept the report as technical review evidence**, **return it for correction or further evidence**, or **reject it**; and
+7. record the decision, date, personal rationale, finding dispositions, verdict disposition, unresolved findings, residual-risk decisions, confirmed risk tier, absence of a qualified non-author human reviewer, any authorship/ownership/self-interest or self-review conflict, and an explicit statement that lifecycle advancement was not automatic.
+
+Acceptance under step 6 means only that the Founder accepts the report as sufficient technical evidence for the applicable review stage. It does not assert independent human review and does not itself approve or make operative the reviewed artifact.
+
+The Founder Human Review Disposition is separate from, and MUST be recorded separately from, each of the following: a review-stage technical recommendation or verdict; Founder Approval of a document or Engineering Work Order; implementation authorization; Founder Acceptance of an implementation; security or other risk acceptance; and release or deployment authorization. None is created, merged, or implied by another.
+
+### 8.9 Review Risk Tiers
+
+The Founder MUST classify a proposed Founder-stage review at the highest applicable tier before relying on FS-AITR. Risk is assessed from the actual scope and exposure of the reviewed artifact, not its title or document family:
+
+- **R0 — Editorial.** Formatting, spelling, link repair, metadata reconciliation, or another change with no normative or technical meaning change. FS-AITR is permitted.
+- **R1 — Ordinary.** Reversible, bounded documentation or implementation work within already-approved architecture, with no material security, privacy, production, external, or governance-authority effect. FS-AITR is permitted.
+- **R2 — Elevated.** Architecture, standards, cross-platform behavior, security-sensitive internal controls, broad or difficult-to-reverse implementation, or another material internal change that does not meet an R3 trigger. FS-AITR is permitted only with the complete evidence and personal Founder disposition required by §8.7–§8.8.
+- **R3 — Human-gated.** A qualified non-author human review is mandatory. FS-AITR may support that review but may not be its sole technical review evidence.
+
+A review is R3 if any of the following is true:
+
+- law, contract, regulation, certification, insurer requirement, investor covenant, customer assurance, or another applicable external obligation requires qualified non-author human review, a human signature, or named professional judgment;
+- the change authorizes or performs financial execution or custody of funds or financial assets;
+- the change controls safety-critical behavior where failure can materially harm a person;
+- the change makes a breaking protocol or interface change consumed by an external party;
+- production activation would expose, process, transfer, or control third-party data, funds, or secrets;
+- the change authorizes irreversible destructive storage behavior against production or third-party data;
+- the change elevates privileges across a security or trust boundary; or
+- the change authorizes remote execution outside the bounded local development or test environment.
+
+The current EWO-028 Control Centre work and EMO-002 work are R2 on their presently filed, internal, non-production scopes; they are not R3 merely because they concern important architecture or engineering. This sentence is a risk-classification application only: it is not a technical review, review disposition, approval, implementation authorization, acceptance, or permission to expand either scope. Any scope or exposure change requires fresh classification and may move the work to R3.
+
+### 8.10 Sunset and Historical Integrity
+
+FS-AITR is a temporary Founder-stage accommodation, not the project's permanent independent-review model. For the applicable review scope, permission to use AI as the sole technical review evidence ends at the earliest of:
+
+1. a qualified non-author human engineer or reviewer becoming reasonably available for that domain;
+2. SynapseOS reaching its first external production release or processing its first external customer workload;
+3. law, contract, certification, insurer requirement, investor covenant, or customer assurance requiring independent human review for that scope; or
+4. the change reaching R3 under §8.9.
+
+After sunset, an AI Technical Review Report MAY remain supporting evidence, but it cannot be the sole technical evidence for the review stage; a qualified non-author human must perform and record the required review. The Founder Human Review Disposition does not override a sunset condition.
+
+This model applies prospectively only after the v0.2.0 amendment becomes effective through a separate Approval Authority act. It does not retroactively relabel an earlier AI review as human or independent review, alter an earlier finding, or create a missing disposition. An earlier AI review MAY be recognized prospectively as technical evidence only through a new, distinct Founder Human Review Disposition that identifies the exact historical report and artifact, satisfies §8.8, remains below R3, and occurs before the applicable sunset. Such recognition does not approve the artifact and must preserve the original report's date, authorship, disclosures, findings, and historical wording.
 
 ## 9. Engineering Principles
 
@@ -501,6 +592,8 @@ This section states when each response below is appropriate; it does not redefin
 
 Compliance with this document's mandatory lifecycle (§5–§6) is required for every future major SynapseOS capability, from the point this document becomes effective (GOV-010 §21) forward. This document does not retroactively reclassify, invalidate, or require rework of any capability whose engineering already occurred before this document's own effective date — consistent with GOV-010 §21's own prospective-application principle for newly effective process documents. Where a future capability's own scale genuinely does not warrant a given stage's full formal weight (for example, a documentation-only correction requiring no Engineering Report, as EWO-010 itself demonstrates), that proportionality is itself part of conformance, not an exception to it — provided it is disclosed, exactly as EWO-010 discloses it, rather than silently assumed.
 
+From the effective date of v0.2.0, any review relying on FS-AITR must satisfy §8.7–§8.10. This adds a truthful evidence-and-human-disposition path where a qualified non-author human reviewer is unavailable; it does not weaken any stage's existing method, evidence, finding-severity, correction, or exit requirements.
+
 ## 13. Open Questions
 
 13.1. **Whether "Design Exploration," "Design Approval Review," "Architecture Review," "Architecture/Design Correction," "Narrow Re-Review," and "Independent Implementation Review" should ever become registered STD-001 controlled-document families**, with their own identifier series, rather than remaining functionally demonstrated practices realized within existing families' own conventions (§6.4, §6.5, §6.9–§6.11). This document takes no position and makes no recommendation — that decision, if ever wanted, belongs to a future, separately authorized STD-001 amendment, evaluated on its own evidence.
@@ -521,6 +614,7 @@ Internal:
 - GOV-011 — Architecture Review Board Charter
 - GOV-012 — Architecture Review Board Session 001
 - STD-001 — Documentation Standards (§7, §10, §13, §31, §46, §47, §50, §51, §52)
+- STD-031 — Engineering Lifecycle Standard (v0.2.1 Approved; v0.3.0 amendment candidate applying §8.7–§8.10 to Independent Engineering Review and Independent Implementation Review)
 - ADR-0011 — Bootstrap Approval Authority
 - ADR-0012 — Corrective Founder Approval Evidence Record basis
 
@@ -540,6 +634,7 @@ Source evidence (read in full or independently verified during this document's p
 | Version | Date | Author | Description |
 |---------|------|--------|-------------|
 | 0.1.0 | 2026-07-26 | Denver Jacobs (AI-assisted) | Initial Draft. Documents the mandatory Engineering Lifecycle demonstrated across this project's governance, research, design, architecture, and engineering history: sixteen stages from Idea through Publication, each stated as the single question it answers, its permitted and prohibited activities, required outputs, and entry/exit criteria. Filed as GOV-013 rather than GOV-003 after repository verification found GOV-003 already exists, is a different, unrelated document (Governance Model), and is genuinely Approved (independently hash-verified against commit `43a49b4` during this document's own preparation) — disclosed to, and confirmed by, the document's requester before filing. Documents two forms of Research/Research Review realization (multi-document RES/RSS/ACR/AFR at foundational scale; embedded, single-document comparative analysis at single-capability scale) and discloses that several stages (Design Exploration, Design Approval Review, Architecture Review, Architecture/Design Correction, Narrow Re-Review) are demonstrated, functional practices not currently registered as their own STD-001 document families, rather than presenting a uniform formality the evidence does not support. No architecture, implementation, capability-specific rule, or STD-001 amendment is introduced. |
+| 0.2.0 | 2026-08-13 | Denver Jacobs (AI-assisted) | MINOR amendment candidate defining the temporary Founder-Stage AI-Assisted Independent Technical Review (FS-AITR) evidence pattern (§8.7), the required separate personal Founder Human Review Disposition (§8.8), risk tiers R0–R3 and mandatory R3 triggers (§8.9), and the earliest-event sunset and prospective historical-recognition rules (§8.10). "Independent technical" is explicitly bounded to adversarial evidence re-derivation and does not mean independent human review. Preserves the existing lifecycle stages, finding severities, correction discipline, evidence standards, and human Approval Authority. Grants no approval, implementation, acceptance, release, deployment, risk-acceptance, or external authority. |
 
 ## 16. Approval Status
 
@@ -547,35 +642,45 @@ Source evidence (read in full or independently verified during this document's p
 
 | Field | Value |
 |-------|-------|
+| Current artifact | v0.2.0 amendment candidate |
 | Lifecycle status | Draft |
-| Normal-governance disposition | Not yet approved |
-| Disposition date | Not yet assigned |
-| Approving actor | Not yet assigned |
+| Prior operative version | v0.1.0 — Approved by separate Normal-Governance evidence commit `3ac7cfb2e953004e891586e5ffef31e5d4fc87a6`, effective 2026-07-26 |
+| Current-candidate disposition | Not reviewed and not approved |
+| Current-candidate disposition date | Not assigned |
+| Current-candidate approving actor | Not assigned |
 
-### Immutable Approval Evidence
+### Prior Immutable Approval Evidence — v0.1.0
 
 | Field | Value |
 |-------|-------|
 | Document ID | GOV-013 |
 | Repository path | governance/GOV-013-Engineering-Lifecycle.md |
 | Version | 0.1.0 |
-| Artifact commit | Not yet created |
-| Git blob ID | Not yet created |
-| SHA-256 | Not yet created |
-| Approver | Not yet assigned |
-| Approver capacity | Not yet assigned |
-| Approval-authority source | Not yet assigned (Governance-tier normal-governance disposition per GOV-003 §3.1 and §5, on the same basis as GOV-002, GOV-004, and GOV-010) |
-| Approval type | Not yet assigned |
-| Review evidence | Not yet created |
-| Independent-review status | Not yet created |
-| Self-approval / conflict-of-interest disclosure | Not yet created |
-| Rationale | Not yet created |
-| Known limitations | Not yet created |
-| Unresolved issues | Not yet created |
-| Disposition | Not yet approved |
-| Effective date | Not yet assigned |
-| Evidence commit | Not yet created |
-| Evidence publication state | Not yet published |
-| Relevant evidence | Not yet created |
+| Artifact commit | `416c7ef26bdff8435ecc53d918361d133600b757` |
+| Git blob ID | `6be0a5bf34cf64a0b3fbc339ac94dc6b627eb3cf` |
+| SHA-256 | `ce85623bf307ac4fcd82e8d6435a13e5577183b09dfa6652d71412b33e32b00e` |
+| Approver | Denver Jacobs |
+| Approver capacity | Founder, exercising interim Chief Architect Class B authority under GOV-003 §3.2 and GOV-010 §5 |
+| Approval type | Normal-governance disposition; not Act 1, Act 2, or the GOV-004 Validation Act |
+| Independent-review status | No independent human review existed or was claimed; the cited technical review was AI-conducted and evidence-based |
+| Disposition | Approved |
+| Effective date | 2026-07-26 |
+| Evidence commit | `3ac7cfb2e953004e891586e5ffef31e5d4fc87a6` |
+| Evidence publication state | Published to `origin/main` |
 
-No field in this section may be populated until the corresponding act has genuinely occurred and is evidenced per ADR-0011 §14 and ADR-0012 §9. This table does not, and must not be read to, claim that GOV-013 has been approved.
+The evidence commit is authoritative for the exact v0.1.0 identity above. This historical record does not approve, review, or otherwise dispose of v0.2.0.
+
+### Current Candidate — v0.2.0
+
+| Field | Value |
+|-------|-------|
+| Artifact commit | Not yet created at authoring time |
+| Git blob ID | Not yet created at authoring time |
+| SHA-256 | Not yet created at authoring time |
+| Review evidence | Not yet created |
+| Founder Human Review Disposition | Not yet created |
+| Independent-review status | No review claimed |
+| Approval disposition | Not yet approved |
+| Approval evidence | Not yet created |
+
+No review or approval field for v0.2.0 may be populated until the corresponding act has genuinely occurred and is evidenced against this candidate's exact committed identity. The authoring and publication commit for v0.2.0 is not a review, Founder Human Review Disposition, or Approval act.
